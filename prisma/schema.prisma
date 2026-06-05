@@ -1,0 +1,290 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Company {
+  id        String   @id @default(cuid())
+  name      String
+  limit     Int      @default(50000000)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  users        User[]
+  jobPostings  JobPosting[]
+  documents    Document[]
+  tests        Test[]
+  comparisonSessions ComparisonSession[]
+}
+
+
+model User {
+  id                   String            @id @default(cuid())
+  name                 String?
+  email                String?           @unique
+  password             String?
+  role                 String            @default("INDIVIDUAL") // SUPER_ADMIN, COMPANY_MANAGER, INDIVIDUAL
+  chronologicalHistory String?           // CV/Geçmiş bilgisi (Bireysel için)
+  companyId            String?
+  company              Company?          @relation(fields: [companyId], references: [id])
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  testResults          TestResult[]
+  testAssignments      TestAssignment[]
+  favoriteItems        FavoriteItem[]
+  certificates         Certificate[]
+}
+
+model TestAssignment {
+  id           String      @id @default(cuid())
+  userId       String
+  user         User        @relation(fields: [userId], references: [id])
+  jobPostingId String
+  jobPosting   JobPosting  @relation(fields: [jobPostingId], references: [id])
+  status       String      @default("PENDING") // PENDING, COMPLETED
+  testResultId String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+}
+
+model TestResult {
+  id               String      @id @default(cuid())
+  userId           String
+  user             User        @relation(fields: [userId], references: [id])
+  jobPostingId     String?
+  jobPosting       JobPosting? @relation(fields: [jobPostingId], references: [id])
+  sector           String
+  department       String
+  roleName         String
+  score            Float
+  timeSpentSec     Int
+  profileAnalysis  String
+  benchmarking     String
+  hireDecision     String
+  developmentAreas String
+  flawAnalysis     String
+  createdAt        DateTime    @default(now())
+}
+
+model JobPosting {
+  id             String           @id @default(cuid())
+  companyId      String?
+  company        Company?         @relation(fields: [companyId], references: [id])
+  title          String
+  sector         String
+  department     String
+  roleName       String
+  competencies   String
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  testResults    TestResult[]
+  testAssignments TestAssignment[]
+}
+
+model FavoriteItem {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  itemType    String   // "QUESTION", "TEST", "ARTICLE"
+  itemRefId   String   // Id of the saved item
+  title       String
+  description String?
+  createdAt   DateTime @default(now())
+}
+
+model Certificate {
+  id          String   @id @default(cuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id])
+  name        String
+  issuer      String
+  issueDate   DateTime @default(now())
+  badgeUrl    String?
+}
+
+model Document {
+  id          String   @id @default(cuid())
+  companyId   String?
+  company     Company? @relation(fields: [companyId], references: [id])
+  name        String
+  subject     String?
+  type        String   // "UPLOADED" or "CREATED"
+  fileFormat  String?  // "pdf", "docx", "txt", "html"
+  content     String?  // Zengin metin içeriği (Yaratılanlar için)
+  filePath    String?  // Sunucudaki yol (Yüklenenler için)
+  sizeBytes   Int      @default(0)
+  sector      String?
+  department  String?
+  roleName    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  tests       Test[]
+}
+
+model Test {
+  id           String   @id @default(cuid())
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  documentId   String?
+  document     Document? @relation(fields: [documentId], references: [id])
+  
+  title        String
+  description  String?
+  
+  // Phase 6 Simulation Fields
+  sector       String?
+  department   String?
+  roleName     String?
+  competencies String?  // JSON string of selected competencies
+  difficulty   String?  @default("Orta") // Kolay, Orta, Zor, Ekspert
+  scenarioText String?  // The Case study
+  timeLimitSec Int      @default(900) // Default 15 minutes
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  questions    Question[]
+  attempts     TestAttempt[]
+}
+
+model Question {
+  id            String   @id @default(cuid())
+  testId        String
+  test          Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  
+  type          String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE or OPEN_ENDED
+  competency    String?  // Which competency this targets
+  
+  text          String
+  options       String?  // JSON string of options (null if OPEN_ENDED)
+  correctAnswer String?  // null if OPEN_ENDED
+  explanation   String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  answers       Answer[]
+}
+
+model TestAttempt {
+  id               String   @id @default(cuid())
+  testId           String
+  test             Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
+  userId           String   // The person taking the test
+  
+  status           String   @default("IN_PROGRESS") // IN_PROGRESS, COMPLETED
+  score            Float?
+  timeSpentSec     Int?
+  
+  // Phase 6 Evaluation Results
+  competencyMatrix String?  // JSON string: { "Leadership": 85, "Problem Solving": 40 }
+  aiCareerAdvice   String?  // Step by step roadmap
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  answers          Answer[]
+}
+
+model Answer {
+  id            String      @id @default(cuid())
+  attemptId     String
+  attempt       TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  questionId    String
+  question      Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  
+  userAnswer    String      // The selected option or typed text
+  isCorrect     Boolean?    // AI evaluated for OPEN_ENDED, strict equal for MULTIPLE_CHOICE
+  pointsAwarded Float       @default(0)
+  aiFeedback    String?     // Evaluation note for open ended questions
+  
+  createdAt     DateTime    @default(now())
+}
+
+// ==============================
+// PHASE 7: MASTER DATA BANK
+// ==============================
+
+model Industry {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model Department {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+}
+
+model JobRole {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?  // Role responsibilities
+  hierarchy   String   @default("EXPERT") // MANAGEMENT, EXPERT, JUNIOR vb.
+  createdAt   DateTime @default(now())
+}
+
+model Competency {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String   @default("BİLİŞSEL") // BİLİŞSEL, TEMEL, TEKNİK, YÖNETSEL
+  causeEffect String?  // Sebep-Sonuç (Cause & Effect) İş Etkisi Metni
+  description String?
+  levelA      String?  // Çok Yetersiz
+  levelB      String?  // Yetersiz
+  levelC      String?  // Beklenen
+  levelD      String?  // Yeterli
+  levelE      String?  // Çok Yeterli
+  createdAt   DateTime @default(now())
+}
+
+model QuestionTemplate {
+  id            String   @id @default(cuid())
+  sector        String?
+  department    String?
+  roleName      String?
+  competency    String?
+  difficulty    String   @default("Orta") // Kolay, Orta, Zor, Ekspert
+  type          String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE or OPEN_ENDED
+  
+  scenarioText  String?  // Base scenario pattern
+  questionText  String
+  options       String?  // JSON string
+  correctAnswer String?
+  explanation   String?
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model ComparisonSession {
+  id           String   @id @default(cuid())
+  companyId    String?
+  company      Company? @relation(fields: [companyId], references: [id])
+  title        String
+  type         String   // "RECRUITMENT" or "PROMOTION"
+  requirements String
+  status       String   @default("ACTIVE") // ACTIVE, COMPLETED
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  candidates   ComparisonCandidate[]
+}
+
+model ComparisonCandidate {
+  id               String   @id @default(cuid())
+  sessionId        String
+  session          ComparisonSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  name             String
+  email            String
+  submittedData    String?  // JSON or text: CV answers or Promotion completion details
+  agentEvaluations String?  // JSON string of evaluations from 10 agents
+  score            Float?
+  isWinner         Boolean  @default(false)
+  status           String   @default("PENDING") // PENDING, SUBMITTED, EVALUATED
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+

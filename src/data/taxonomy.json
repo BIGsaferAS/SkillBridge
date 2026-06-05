@@ -1,0 +1,80 @@
+{
+  "sectors": [
+    {
+      "id": "1",
+      "name": "Teknoloji, Bilişim ve Elektronik",
+      "departments": [
+        {
+          "id": "1_1",
+          "name": "Yazılım ve Dijital Hizmetler",
+          "roles": [
+            {
+              "id": "1_1_1",
+              "name": "Kıdemli Geliştirici",
+              "competencies": [
+                "Kod Kalitesi",
+                "Problem Çözme",
+                "Mimari Tasarım",
+                "Takım Çalışması"
+              ]
+            },
+            {
+              "id": "1_1_2",
+              "name": "Veritabanı Yöneticisi",
+              "competencies": [
+                "Veri Güvenliği",
+                "Performans Optimizasyonu",
+                "Yedekleme ve Kurtarma",
+                "Sistem İzleme"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "2",
+      "name": "Finans, Bankacılık ve Sigortacılık",
+      "departments": [
+        {
+          "id": "2_1",
+          "name": "Yatırım",
+          "roles": [
+            {
+              "id": "2_1_1",
+              "name": "Portföy Yöneticisi",
+              "competencies": [
+                "Risk Analizi",
+                "Piyasa Okuryazarlığı",
+                "Kriz Yönetimi",
+                "Stratejik Karar Alma"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "3",
+      "name": "Otomotiv ve Kara Taşımacılığı",
+      "departments": [
+        {
+          "id": "3_1",
+          "name": "Üretim",
+          "roles": [
+            {
+              "id": "3_1_1",
+              "name": "Montaj Hattı Sorumlusu",
+              "competencies": [
+                "Kalite Kontrol",
+                "Süreç Optimizasyonu",
+                "İş Güvenliği",
+                "Zaman Yönetimi"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
