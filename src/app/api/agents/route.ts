@@ -24,6 +24,8 @@ export async function POST(req: Request) {
        prompt = `Sen SkillBridge Ajan 6 (Hata Dedektörü) rolündesin. Aday şu sorularda hata yaptı: ${JSON.stringify(input)}. Adayın neden hata yaptığına dair 2-3 cümlelik sert, psikolojik ve analitik bir 'Hata Haritası' analizi yaz. Sadece düz metin dön.`;
     } else if (agentId === 'AJAN_10') {
        prompt = `Sen SkillBridge Ajan 10 (CV Analisti) rolündesin. Adayın girdiği CV'yi (Özgeçmiş) oku ve İlan Gereksinimleri ile karşılaştır. İlan: ${JSON.stringify(input.job)}. CV: ${input.cvText}. Sadece adayın CV'sine özel, testte onu zorlamak için kullanılacak 3 adet 'Spesifik Zayıf Nokta veya Odaklanılacak Konu' çıkar. JSON formatında dön. Format: {"focusAreas": ["..."]}`;
+    } else if (agentId === 'AJAN_11') {
+       prompt = `Sen SkillBridge Ajan 11 (Barkod & Sınav Koordinatörü) rolündesin. Görevin, QR ve barkod tabanlı sınav dağıtım süreçlerini yönetmektir. Admin sana şu talebi gönderdi: ${JSON.stringify(input)}. Talebi yerine getiren profesyonel, yapıcı ve doğrudan kopyalanabilir e-posta şablonları, link formatları veya veri özetleri içeren bir yanıt üret. Sadece düz metin dön.`;
     }
 
     if (!prompt) {

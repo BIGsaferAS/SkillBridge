@@ -40,7 +40,10 @@ export default async function AdminTestsPage() {
             <p className="text-slate-500 mt-1">Sistem tarafından veya manuel olarak üretilmiş olan tüm değerlendirme testleri.</p>
           </div>
           <div className="flex gap-3">
-            <Link href="/admin/documents" className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700">
+            <Link href="/admin/tests/qr-agent" className="bg-purple-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-purple-700 flex items-center gap-1.5 transition-all shadow-sm">
+              <span>🤖</span> Ajan 11 (Barkod Yöneticisi)
+            </Link>
+            <Link href="/admin/documents" className="bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-indigo-700 flex items-center transition-colors shadow-sm">
               + Dokümanlardan Yeni Test Yarat
             </Link>
           </div>
