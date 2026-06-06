@@ -21,10 +21,10 @@ export default function AdminHeader({ userName, companyName }: { userName: strin
       
       <div className="flex items-center space-x-4">
         <button 
-          onClick={() => router.push('/admin/users')}
+          onClick={() => router.push('/super-admin/data-bank')}
           className="text-sm font-medium bg-cyan-600 hover:bg-cyan-700 px-3 py-1.5 rounded-md transition-colors"
         >
-          Kullanıcı Yönetimi
+          Merkezi Veri Bankası
         </button>
         <button 
           onClick={() => router.push('/admin/tests')}
