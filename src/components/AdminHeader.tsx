@@ -39,6 +39,12 @@ export default function AdminHeader({ userName, companyName }: { userName: strin
           Test Sonuçları
         </button>
         <button 
+          onClick={() => router.push('/admin/tests/qr-agent')}
+          className="text-sm font-medium bg-fuchsia-600 hover:bg-fuchsia-700 px-3 py-1.5 rounded-md transition-colors"
+        >
+          Barkod & Sınav Dağıtım
+        </button>
+        <button 
           onClick={() => router.push('/admin/documents')}
           className="text-sm font-medium bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-md transition-colors"
         >
