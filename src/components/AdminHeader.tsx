@@ -45,6 +45,12 @@ export default function AdminHeader({ userName, companyName }: { userName: strin
           Barkod & Sınav Dağıtım
         </button>
         <button 
+          onClick={() => router.push('/admin/agents')}
+          className="text-sm font-medium bg-violet-600 hover:bg-violet-700 px-3 py-1.5 rounded-md transition-colors"
+        >
+          Ajanlar & Görevler
+        </button>
+        <button 
           onClick={() => router.push('/admin/documents')}
           className="text-sm font-medium bg-emerald-600 hover:bg-emerald-700 px-3 py-1.5 rounded-md transition-colors"
         >
