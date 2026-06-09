@@ -17,8 +17,8 @@ export const authOptions: NextAuthOptions = {
         }
         
         // Mock Super Admin
-        if (credentials.email === "super@skillbridge.ai" && credentials.password === "super123") {
-          return { id: "super-1", name: "Süper Yönetici", email: "super@skillbridge.ai", role: "SUPER_ADMIN", companyId: null }
+        if (credentials.email === "bilgehanveral@gmail.com" && credentials.password === "bhv18101928") {
+          return { id: "super-1", name: "Süper Yönetici", email: "bilgehanveral@gmail.com", role: "SUPER_ADMIN", companyId: null }
         }
         
         // Mock Company Manager

@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import AdminHeader from "@/components/AdminHeader"
 import Link from "next/link"
 import TestShareButton from "@/components/TestShareButton"
 
@@ -29,9 +28,6 @@ export default async function AdminTestsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black">
-      <AdminHeader 
-        userName={(session.user as any).name} 
-      />
 
       <main className="max-w-7xl mx-auto p-6 mt-4">
         <div className="flex justify-between items-center mb-8">

@@ -1,9 +1,10 @@
 generator client {
-  provider = "prisma-client-js"
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "debian-openssl-1.1.x", "debian-openssl-3.0.x", "linux-musl", "linux-musl-openssl-3.0.x"]
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "sqlserver"
   url      = env("DATABASE_URL")
 }
 
@@ -27,7 +28,7 @@ model User {
   email                String?           @unique
   password             String?
   role                 String            @default("INDIVIDUAL") // SUPER_ADMIN, COMPANY_MANAGER, INDIVIDUAL
-  chronologicalHistory String?           // CV/Geçmiş bilgisi (Bireysel için)
+  chronologicalHistory String?           @db.NVarChar(Max) // CV/Geçmiş bilgisi (Bireysel için)
   companyId            String?
   company              Company?          @relation(fields: [companyId], references: [id])
   createdAt            DateTime          @default(now())
@@ -41,9 +42,9 @@ model User {
 model TestAssignment {
   id           String      @id @default(cuid())
   userId       String
-  user         User        @relation(fields: [userId], references: [id])
+  user         User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   jobPostingId String
-  jobPosting   JobPosting  @relation(fields: [jobPostingId], references: [id])
+  jobPosting   JobPosting  @relation(fields: [jobPostingId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   status       String      @default("PENDING") // PENDING, COMPLETED
   testResultId String?
   createdAt    DateTime    @default(now())
@@ -53,19 +54,19 @@ model TestAssignment {
 model TestResult {
   id               String      @id @default(cuid())
   userId           String
-  user             User        @relation(fields: [userId], references: [id])
+  user             User        @relation(fields: [userId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   jobPostingId     String?
-  jobPosting       JobPosting? @relation(fields: [jobPostingId], references: [id])
+  jobPosting       JobPosting? @relation(fields: [jobPostingId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   sector           String
   department       String
   roleName         String
   score            Float
   timeSpentSec     Int
-  profileAnalysis  String
-  benchmarking     String
-  hireDecision     String
-  developmentAreas String
-  flawAnalysis     String
+  profileAnalysis  String      @db.NVarChar(Max)
+  benchmarking     String      @db.NVarChar(Max)
+  hireDecision     String      @db.NVarChar(Max)
+  developmentAreas String      @db.NVarChar(Max)
+  flawAnalysis     String      @db.NVarChar(Max)
   createdAt        DateTime    @default(now())
 }
 
@@ -77,7 +78,7 @@ model JobPosting {
   sector         String
   department     String
   roleName       String
-  competencies   String
+  competencies   String           @db.NVarChar(Max)
   isActive       Boolean          @default(true)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
@@ -92,7 +93,7 @@ model FavoriteItem {
   itemType    String   // "QUESTION", "TEST", "ARTICLE"
   itemRefId   String   // Id of the saved item
   title       String
-  description String?
+  description String?  @db.NVarChar(Max)
   createdAt   DateTime @default(now())
 }
 
@@ -114,7 +115,7 @@ model Document {
   subject     String?
   type        String   // "UPLOADED" or "CREATED"
   fileFormat  String?  // "pdf", "docx", "txt", "html"
-  content     String?  // Zengin metin içeriği (Yaratılanlar için)
+  content     String?  @db.NVarChar(Max) // Zengin metin içeriği (Yaratılanlar için)
   filePath    String?  // Sunucudaki yol (Yüklenenler için)
   sizeBytes   Int      @default(0)
   sector      String?
@@ -128,20 +129,20 @@ model Document {
 model Test {
   id           String   @id @default(cuid())
   companyId    String?
-  company      Company? @relation(fields: [companyId], references: [id])
+  company      Company? @relation(fields: [companyId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   documentId   String?
-  document     Document? @relation(fields: [documentId], references: [id])
+  document     Document? @relation(fields: [documentId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   
   title        String
-  description  String?
+  description  String?  @db.NVarChar(Max)
   
   // Phase 6 Simulation Fields
   sector       String?
   department   String?
   roleName     String?
-  competencies String?  // JSON string of selected competencies
+  competencies String?  @db.NVarChar(Max)  // JSON string of selected competencies
   difficulty   String?  @default("Orta") // Kolay, Orta, Zor, Ekspert
-  scenarioText String?  // The Case study
+  scenarioText String?  @db.NVarChar(Max)  // The Case study
   timeLimitSec Int      @default(900) // Default 15 minutes
   
   createdAt    DateTime @default(now())
@@ -157,12 +158,12 @@ model Question {
   test          Test     @relation(fields: [testId], references: [id], onDelete: Cascade)
   
   type          String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE or OPEN_ENDED
-  competency    String?  // Which competency this targets
+  competency    String?  // Target competency
   
-  text          String
-  options       String?  // JSON string of options (null if OPEN_ENDED)
-  correctAnswer String?  // null if OPEN_ENDED
-  explanation   String?
+  text          String   @db.NVarChar(Max)
+  options       String?  @db.NVarChar(Max)  // JSON string of options
+  correctAnswer String?  @db.NVarChar(Max)
+  explanation   String?  @db.NVarChar(Max)
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -180,8 +181,8 @@ model TestAttempt {
   timeSpentSec     Int?
   
   // Phase 6 Evaluation Results
-  competencyMatrix String?  // JSON string: { "Leadership": 85, "Problem Solving": 40 }
-  aiCareerAdvice   String?  // Step by step roadmap
+  competencyMatrix String?  @db.NVarChar(Max)  // JSON string
+  aiCareerAdvice   String?  @db.NVarChar(Max)  // Step by step roadmap
   
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
@@ -191,14 +192,14 @@ model TestAttempt {
 model Answer {
   id            String      @id @default(cuid())
   attemptId     String
-  attempt       TestAttempt @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  attempt       TestAttempt @relation(fields: [attemptId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   questionId    String
-  question      Question    @relation(fields: [questionId], references: [id], onDelete: Cascade)
+  question      Question    @relation(fields: [questionId], references: [id], onDelete: NoAction, onUpdate: NoAction)
   
-  userAnswer    String      // The selected option or typed text
-  isCorrect     Boolean?    // AI evaluated for OPEN_ENDED, strict equal for MULTIPLE_CHOICE
+  userAnswer    String      @db.NVarChar(Max)  // Selected option or typed text
+  isCorrect     Boolean?    // AI evaluated or strict equal
   pointsAwarded Float       @default(0)
-  aiFeedback    String?     // Evaluation note for open ended questions
+  aiFeedback    String?     @db.NVarChar(Max)  // Evaluation note
   
   createdAt     DateTime    @default(now())
 }
@@ -222,8 +223,8 @@ model Department {
 model JobRole {
   id          String   @id @default(cuid())
   name        String   @unique
-  description String?  // Role responsibilities
-  hierarchy   String   @default("EXPERT") // MANAGEMENT, EXPERT, JUNIOR vb.
+  description String?  @db.NVarChar(Max)
+  hierarchy   String   @default("EXPERT") // MANAGEMENT, EXPERT, JUNIOR
   createdAt   DateTime @default(now())
 }
 
@@ -231,13 +232,13 @@ model Competency {
   id          String   @id @default(cuid())
   name        String   @unique
   category    String   @default("BİLİŞSEL") // BİLİŞSEL, TEMEL, TEKNİK, YÖNETSEL
-  causeEffect String?  // Sebep-Sonuç (Cause & Effect) İş Etkisi Metni
-  description String?
-  levelA      String?  // Çok Yetersiz
-  levelB      String?  // Yetersiz
-  levelC      String?  // Beklenen
-  levelD      String?  // Yeterli
-  levelE      String?  // Çok Yeterli
+  causeEffect String?  @db.NVarChar(Max)
+  description String?  @db.NVarChar(Max)
+  levelA      String?  @db.NVarChar(Max)
+  levelB      String?  @db.NVarChar(Max)
+  levelC      String?  @db.NVarChar(Max)
+  levelD      String?  @db.NVarChar(Max)
+  levelE      String?  @db.NVarChar(Max)
   createdAt   DateTime @default(now())
 }
 
@@ -250,11 +251,11 @@ model QuestionTemplate {
   difficulty    String   @default("Orta") // Kolay, Orta, Zor, Ekspert
   type          String   @default("MULTIPLE_CHOICE") // MULTIPLE_CHOICE or OPEN_ENDED
   
-  scenarioText  String?  // Base scenario pattern
-  questionText  String
-  options       String?  // JSON string
-  correctAnswer String?
-  explanation   String?
+  scenarioText  String?  @db.NVarChar(Max)  // Base scenario pattern
+  questionText  String   @db.NVarChar(Max)
+  options       String?  @db.NVarChar(Max)  // JSON string
+  correctAnswer String?  @db.NVarChar(Max)
+  explanation   String?  @db.NVarChar(Max)
   
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
@@ -266,7 +267,7 @@ model ComparisonSession {
   company      Company? @relation(fields: [companyId], references: [id])
   title        String
   type         String   // "RECRUITMENT" or "PROMOTION"
-  requirements String
+  requirements String   @db.NVarChar(Max)
   status       String   @default("ACTIVE") // ACTIVE, COMPLETED
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
@@ -279,12 +280,11 @@ model ComparisonCandidate {
   session          ComparisonSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   name             String
   email            String
-  submittedData    String?  // JSON or text: CV answers or Promotion completion details
-  agentEvaluations String?  // JSON string of evaluations from 10 agents
+  submittedData    String?  @db.NVarChar(Max)
+  agentEvaluations String?  @db.NVarChar(Max)
   score            Float?
   isWinner         Boolean  @default(false)
   status           String   @default("PENDING") // PENDING, SUBMITTED, EVALUATED
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 }
-

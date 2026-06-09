@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SkillBridge AI - Detaylı Kullanım Kılavuzu</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --border-color: rgba(99, 102, 241, 0.08);
+            --text-primary: #0f172a;
+            --text-secondary: #475569;
+            --accent-purple: #8b5cf6;
+            --accent-indigo: #6366f1;
+            --accent-emerald: #10b981;
+            --gradient-primary: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%);
+            --glow-color: rgba(99, 102, 241, 0.04);
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            line-height: 1.6;
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* Sidebar Navigation */
+        .sidebar {
+            width: 300px;
+            background-color: var(--sidebar-bg);
+            border-right: 1px solid var(--border-color);
+            padding: 2.5rem 1.5rem;
+            position: fixed;
+            height: 100vh;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.01);
+        }
+
+        .logo-wrap {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .logo-title {
+            font-family: 'Outfit', sans-serif;
+            font-weight: 800;
+            font-size: 1.5rem;
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .nav-list {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 0.6rem;
+        }
+
+        .nav-item a {
+            color: var(--text-secondary);
+            text-decoration: none;
+            font-size: 0.9rem;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.7rem 0.9rem;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .nav-item a:hover {
+            background-color: rgba(99, 102, 241, 0.06);
+            color: var(--accent-indigo);
+        }
+
+        .nav-item.active a {
+            background-color: var(--accent-indigo);
+            color: #ffffff;
+            font-weight: 600;
+            box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+        }
+
+        /* Main Content */
+        .main-content {
+            margin-left: 300px;
+            flex-grow: 1;
+            padding: 4rem 5rem;
+            max-width: 1000px;
+        }
+
+        @media (max-width: 1024px) {
+            body {
+                flex-direction: column;
+            }
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+            }
+            .main-content {
+                margin-left: 0;
+                padding: 2.5rem 1.5rem;
+            }
+        }
+
+        h1 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 2.75rem;
+            font-weight: 800;
+            margin-bottom: 0.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.025em;
+        }
+
+        p.intro {
+            font-size: 1.15rem;
+            color: var(--text-secondary);
+            margin-bottom: 3.5rem;
+            font-weight: 400;
+        }
+
+        h2 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.85rem;
+            font-weight: 700;
+            margin: 3.5rem 0 1.5rem 0;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid var(--border-color);
+            color: var(--text-primary);
+            scroll-margin-top: 2rem;
+            letter-spacing: -0.02em;
+        }
+
+        h3 {
+            font-family: 'Outfit', sans-serif;
+            font-size: 1.35rem;
+            font-weight: 600;
+            margin: 2rem 0 1rem 0;
+            color: var(--accent-indigo);
+        }
+
+        p {
+            color: var(--text-secondary);
+            margin-bottom: 1.25rem;
+            font-size: 1rem;
+            line-height: 1.7;
+        }
+
+        ol, ul {
+            margin-left: 2rem;
+            margin-bottom: 1.75rem;
+            color: var(--text-secondary);
+        }
+
+        li {
+            margin-bottom: 0.6rem;
+            line-height: 1.6;
+        }
+
+        .alert-box {
+            background-color: #ffffff;
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--accent-indigo);
+            border-radius: 16px;
+            padding: 1.75rem;
+            margin: 2rem 0;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.02);
+        }
+
+        .alert-box.important {
+            border-left-color: var(--accent-purple);
+            background-color: rgba(139, 92, 246, 0.02);
+        }
+
+        .alert-box h4 {
+            font-family: 'Outfit', sans-serif;
+            margin-bottom: 0.75rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .diagram-container {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            border: 1px solid var(--border-color);
+            margin: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+        }
+
+        .img-container {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 1rem;
+            border: 1px solid var(--border-color);
+            margin: 2rem 0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.01);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .img-container img {
+            max-width: 100%;
+            height: auto;
+            border-radius: 12px;
+        }
+
+        .img-caption {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+
+        .footer {
+            margin-top: 6rem;
+            padding-top: 2.5rem;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        code {
+            background-color: rgba(99, 102, 241, 0.05);
+            color: var(--accent-indigo);
+            padding: 0.2rem 0.4rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar">
+        <div class="logo-wrap">
+            <span class="logo-title">SkillBridge AI</span>
+        </div>
+        <nav>
+            <ul class="nav-list">
+                <li class="nav-item"><a href="#giris">💻 1. Giriş ve Rol Yönetimi</a></li>
+                <li class="nav-item"><a href="#dogrulama">🏢 2. Şirket Aday Listesi & QR</a></li>
+                <li class="nav-item"><a href="#ready-tests">📋 3. Hazır Testler & Atama</a></li>
+                <li class="nav-item"><a href="#documents">📂 4. Dokümanlardan Sınav</a></li>
+                <li class="nav-item"><a href="#result">🎯 5. Rapor & Soru/Cevap</a></li>
+                <li class="nav-item"><a href="#admin-detail">📊 6. Yönetici Rapor Detayı</a></li>
+                <li class="nav-item"><a href="#comparison">👥 7. Aday Karşılaştırma</a></li>
+                <li class="nav-item"><a href="#methodology">🎯 8. Yetkinlik Metodolojisi</a></li>
+            </ul>
+        </nav>
+    </div>
+
+    <div class="main-content">
+        <h1>📖 Detaylı Kullanım Kılavuzu</h1>
+        <p class="intro">SkillBridge AI Otonom Değerlendirme ve İK Analiz Platformu kullanım rehberidir.</p>
+
+        <section id="giris">
+            <h2>💻 1. Giriş ve Rol Yönetimi</h2>
+            <p>SkillBridge AI, işe alım ve yetenek değerlendirme süreçlerinizi yapay zeka ajanları ile otomatize eden, adayları sektörel vakalar ve çoktan seçmeli simülasyonlarla ölçen yeni nesil bir İK Değerlendirme Merkezi (Assessment Center) platformudur.</p>
+            <p>Platforma giriş yapmak için <code>/login</code> adresi kullanılır. Platformda üç temel kullanıcı rolü tanımlanmıştır:</p>
+            
+            <h3>A. Süper Yönetici (SUPER_ADMIN)</h3>
+            <ul>
+                <li><strong>Yetki Kapsamı:</strong> Tüm şirketleri, tüm kullanıcıları, sistem veritabanındaki soru şablonlarını, yetkinlikleri ve sektörleri yönetir.</li>
+                <li><strong>Giriş Yönlendirmesi:</strong> Giriş yaptıktan sonra doğrudan ana yönetim paneline (<code>/admin</code>) yönlendirilir. İhtiyaç duyması halinde <code>/super-admin</code> altındaki merkezi veri bankasını yönetebilir.</li>
+            </ul>
+
+            <h3>B. Şirket Yöneticisi / İK Yetkilisi (COMPANY_MANAGER / ADMIN)</h3>
+            <ul>
+                <li><strong>Yetki Kapsamı:</strong> Kendi şirketine ait ilanları, dokümanları, testleri, aday sonuçlarını ve karşılaştırma oturumlarını yönetir.</li>
+                <li><strong>Giriş Yönlendirmesi:</strong> Giriş yaptığında doğrudan kendi şirketine özel İK Kontrol Paneline (<code>/admin</code>) ulaşır.</li>
+            </ul>
+
+            <h3>C. Bireysel Aday (INDIVIDUAL)</h3>
+            <ul>
+                <li><strong>Yetki Kapsamı:</strong> Kendisine atanan aktif sınavları çözer, katıldığı geçmiş sınavların sonuç raporlarını inceler.</li>
+                <li><strong>Giriş Yönlendirmesi:</strong> Giriş yaptığında Aday Kontrol Paneline (<code>/dashboard</code>) ve kişisel başarı raporlarının yer aldığı "Kişisel Hazine" (<code>/define</code>) sayfasına ulaşır.</li>
+            </ul>
+        </section>
+
+        <section id="dogrulama">
+            <h2>🏢 2. Şirket Aday Listesi ve QR Kod Doğrulama Akışı</h2>
+            <p>Platformda şirketlerin sınav güvenlik süreçlerini artırmak ve giriş deneyimini kolaylaştırmak amacıyla otonom bir <strong>İsim Doğrulama Akışı</strong> entegre edilmiştir.</p>
+            
+            <div class="diagram-container">
+                <div class="mermaid">
+                    graph TD
+                        A["1. Yönetici Paneli (/admin/users)"] -->|"Kullanıcı/Aday Ekle"| B["Veritabanı: Şirket Aday Listesi"]
+                        C["2. Sınav QR Kodu veya Linki"] -->|"Aday Tarafından Okutulur"| D["3. Sınav Ekranı (/tests/id/solve)"]
+                        D -->|"Otomatik Şirket Algılama (test.companyId)"| E["4. Doğrulama Formu: Sadece İsim Girişi"]
+                        E -->|"İsim Sorgusu"| F{"5. Doğrulama API'si (/api/companies/verify-user)"}
+                        F -->|İsim Yok| G["Hata: Listede Bulunamadı"]
+                        F -->|İsim Var| H["6. Sınav Başlar"]
+                        H -->|"Cevaplar Gönderilir"| I["7. Ajan 17 AI Değerlendirmesi"]
+                        I --> J["8. Sonuç Sayfası (/tests/id/result)"]
+                        J -->|"Doğru Cevaplar & Açıklamalar (Giriş Şartsız Görüntüleme)"| K["Aday Raporu"]
+                        I --> L["9. Yönetici Aday Raporu (/admin/id)"]
+                        L -->|"Soru Soru Aday Cevapları & Alınan Puanlar"| M["İK Değerlendirme Raporu"]
+                </div>
+            </div>
+
+            <h3>A. Adayları Şirket Listesine Ekleme (<code>/admin/users</code>)</h3>
+            <p>Şirket QR kod doğrulamasının çalışabilmesi için İK yetkilisinin sınava girecek adayları veya çalışanları sisteme kaydetmiş olması gerekir.</p>
+            <ol>
+                <li>İK Yetkilisi rolüyle sisteme giriş yapın.</li>
+                <li>Menüden <strong>"Kullanıcı Yönetimi"</strong> (veya <code>/admin/users</code>) sayfasına gidin.</li>
+                <li><strong>"+ Yeni Kullanıcı / Aday Ekle"</strong> butonuna tıklayın.</li>
+                <li>Adayın <strong>Ad-Soyad</strong>, <strong>E-posta</strong> ve geçici bir <strong>Şifre</strong> bilgisini girerek <strong>Rolünü</strong> <code>INDIVIDUAL</code> seçip kaydedin. Bu işlem adayı otomatik olarak şirketinizle ilişkilendirir.</li>
+            </ol>
+
+            <h3>B. Otomatik İsim Doğrulama Mekanizması</h3>
+            <ol>
+                <li>Aday, şirketiniz bünyesinde oluşturulmuş bir testin genel linkini veya barkodunu (QR) mobil cihazıyla okuttuğunda <code>/tests/[id]/solve</code> adresine yönlendirilir.</li>
+                <li>Sistem, ilgili sınavın veritabanındaki şirket kimliğini (<code>test.companyId</code>) otomatik olarak sorgular.</li>
+                <li>Eğer sınav bir şirkete aitse, adaydan e-posta adresi istenmez. Sadece <strong>"Ad Soyad"</strong> soran özel <strong>Şirket Yetkili Test Girişi</strong> formu açılır.</li>
+                <li>Aday ismini girip tıkladığında sistem, girilen ad-soyad bilgisini şirketinizin kullanıcı listesinde sorgular (Türkçe karakter duyarlılıkları otomatik çözülür).</li>
+                <li>Eşleşme başarılı olursa, adayın veritabanındaki profiliyle eşleştirilerek sınava girişine izin verilir. Eşleşme başarısızsa <em>"Girdiğiniz isim şirket çalışan listesinde bulunamadı"</em> uyarısı verilir.</li>
+            </ol>
+
+            <h3>C. Şifresiz/Misafir Sonuç Erişim Ayrıcalığı</h3>
+            <p>Şirket listesindeki adayın sınavı çözdükten sonra doğrudan kendi raporunu görüntüleyebilmesi için şifre sorma engeli esnetilmiştir. Aday, tarayıcıda giriş yapmamış (guest) olsa dahi QR kodu doğrulamasıyla çözdüğü sınavın sonucunu (<code>/tests/[id]/result?attemptId=...</code>) anında ve kısıtlama olmaksızın görebilir.</p>
+        </section>
+
+        <section id="ready-tests">
+            <h2>📋 3. Hazır Testler & Hızlı Sınav Atama Modülü (<code>/ready-tests</code>)</h2>
+            <p>İK yetkililerinin adaylara en hızlı şekilde test ataması yapabilmesi için tasarlanmış yeni esnek modüldür.</p>
+
+            <h3>A. Hazır Test Filtreleme</h3>
+            <ol>
+                <li><strong>Sektör</strong>, <strong>Departman</strong> ve <strong>Pozisyon</strong> açılır menülerinden aradığınız kriterleri seçin.</li>
+                <li>Sistem, veritabanındaki hazır senaryolar arasından kriterlerinize uyan testleri anında filtreler. Zorluk derecesi, yetkinlik bilgileri ve soru sayıları kartlar üzerinde gösterilir.</li>
+            </ol>
+
+            <h3>B. Test Görüntüleme (👁️ Görüntüle)</h3>
+            <p>Filtrelenen bir testin içeriğini görmek için <strong>"👁️ Görüntüle"</strong> butonuna tıklayın. Yeni sekmede vaka senaryosunu, yapay zekanın ürettiği tüm çoktan seçmeli soruları, şıkları, doğru şıkkı ve sorunun mantıksal açıklamasını görebilirsiniz.</p>
+
+            <h3>C. Direkt Atama (🚀 Direkt Ata)</h3>
+            <p>Uzun kurulum süreçleriyle uğraşmadan adaya hızlıca test göndermek için:</p>
+            <ol>
+                <li>İlgili test kartındaki <strong>"🚀 Direkt Ata"</strong> butonuna tıklayın.</li>
+                <li>Açılan pencerede atama kapsamını seçin:
+                    <ul>
+                        <li><strong>Tekil Aday:</strong> Adayın ad-soyad ve e-posta adresini girin.</li>
+                        <li><strong>Grup / Ekip:</strong> Belirli bir grup adı girin (Örn: <em>2026_Yaz_Stajyerleri</em>).</li>
+                        <li><strong>Şirket Geneli:</strong> Şirketinize bağlı tüm çalışanlar için genel bir erişim linki ve isim doğrulama akışı üretir.</li>
+                    </ul>
+                </li>
+                <li>Sistem anında <strong>Paylaşım Linkini (URL)</strong> ve <strong>QR Kodunu</strong> üretir. Kopyalayabilir veya yazdırabilirsiniz.</li>
+            </ol>
+
+            <h3>D. Firmaya Özel "Özgür" Test Yaratma</h3>
+            <ol>
+                <li>Sağ taraftaki <strong>"Firmaya Özel Testini Kendin Yarat"</strong> kutusuna gelin.</li>
+                <li><strong>Yapılacak İşin Adını Girin</strong> alanına pozisyonu yazın.</li>
+                <li><strong>"Test Kutusu Oluştur & Direkt Ata"</strong> butonuna tıklayın. Yapay zeka (Gemini) saniyeler içinde özgün bir kriz senaryosu ile 3 adet çoktan seçmeli soruyu üretip kaydeder.</li>
+            </ol>
+        </section>
+
+        <section id="documents">
+            <h2>📂 4. Dokümanlardan Sınav Üretme (<code>/admin/documents</code>)</h2>
+            <p>Şirketinizin kendi yönergelerine, eğitim kitapçıklarına veya teknik dökümanlarına bağlı kalarak sınav hazırlamak için kullanılır.</p>
+            <ol>
+                <li><strong>Doküman Yükle / Yarat:</strong> PDF, DOCX, TXT veya HTML dosyalarını yükleyin ya da panel üzerinden zengin metin editörüyle kendi dokümanınızı oluşturun.</li>
+                <li><strong>Test Yarat:</strong> Dokümanın yanındaki "Test Yarat" seçeneğine tıklayın.</li>
+                <li><strong>Konu Belirle:</strong> Dokümanın sadece belirli bir konusuna odaklanmak istiyorsanız konu adını yazın.</li>
+                <li><strong>Parametreleri Seçin:</strong> Pozisyon adını, zorluk seviyesini, soru sayısını ve süre sınırını belirleyin.</li>
+                <li><strong>Yapay Zeka Derlemesi:</strong> Gemini AI, verdiğiniz döküman içeriğini okuyarak sadece belirttiğiniz konu başlığına ve kurallara sadık kalan vaka analizi ve soruları tamamen şirketinize özel olarak üretir.</li>
+            </ol>
+        </section>
+
+        <section id="result">
+            <h2>🎯 5. Aday Sonuç Raporu ve Soru/Cevap Analizi (<code>/tests/[id]/result</code>)</h2>
+            <p>Sınav tamamlandığında adayın karşısına gelen simülasyon rapor ekranıdır. Ajan 17 (Editör ve Değerlendirme Ajanı) tarafından üretilen tüm verileri içerir.</p>
+            <ul>
+                <li><strong>Genel Skor & Süre:</strong> Adayın 100 üzerinden aldığı genel başarı puanı ve sınav süresi gösterilir.</li>
+                <li><strong>Yetkinlik Matrisi & Radar:</strong> Ölçülen yetkinliklerin yüzde bazında dağılım grafiği ve hedef düzeyi kıyaslaması sunulur.</li>
+                <li><strong>AI Gelişim Yol Haritası:</strong> Ajan 17, adayın zayıf olduğu yetkinlikleri analiz ederek ona 30 günlük eğitim ve gelişim yol haritası hazırlar.</li>
+                <li><strong>Gelişmiş Soru/Cevap Detayı:</strong>
+                    <ul>
+                        <li>Adayın verdiği cevaplar listelenir.</li>
+                        <li>Her sorunun altında <strong>Doğru Cevap</strong> yeşil bir kutu içerisinde net olarak gösterilir.</li>
+                        <li>Soruya ait <strong>Soru Açıklaması</strong> (mantıksal açıklaması) mavi bir kart olarak sunulur.</li>
+                        <li>Yapay zekanın adaya özel hazırladığı <strong>Ajan 17 Geri Bildirimi</strong> (💡) ile aday hatalarını doğrudan öğrenir.</li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <section id="admin-detail">
+            <h2>📊 6. Yönetici Paneli Aday Detay Analizi (<code>/admin/[id]</code>)</h2>
+            <p>İK yetkilisinin aday performanslarını derinlemesine incelediği yönetim sayfasıdır.</p>
+            <ul>
+                <li><strong>Psikolojik Profil & Benchmark:</strong> Adayın karar tarzını belirten İK analizi ve diğer adaylarla kıyaslandığı sektörel konumlandırma.</li>
+                <li><strong>Hata Dedektörü:</strong> Test esnasında adayın sergilediği davranış zafiyetleri ve refleks hataları.</li>
+                <li><strong>Soru Bazlı Detaylı Analiz & Aday Cevapları:</strong> Sayfanın en altına konumlandırılmış bu şık kartta, sınavdaki tüm sorular tek tek listelenir. Adayın verdiği cevap, veritabanında tanımlı doğru cevap, soru açıklaması, alınan puan ve yapay zekanın soru bazlı ürettiği değerlendirme notları yöneticinin ekranında listelenir.</li>
+            </ul>
+        </section>
+
+        <section id="comparison">
+            <h2>👥 7. Aday Karşılaştırma Oturumu (<code>/admin/comparison</code>)</h2>
+            <p>Aynı pozisyona başvuran birden fazla adayın CV'lerini ve çözdükleri test sonuçlarını birleştirerek yapay zeka ile otomatik sıralama yapmak için kullanılır.</p>
+            <ol>
+                <li><strong>Karşılaştırma Oturumu Açın:</strong> Pozisyon adını ve aradığınız kriterleri girin.</li>
+                <li><strong>Adayları Dahil Edin:</strong> Adayların CV'lerini (özgeçmişlerini) sisteme yükleyin ve katıldıkları test sonuçlarını eşleştirin.</li>
+                <li><strong>AI Kıyaslamayı Çalıştırın:</strong> Yapay zeka ajanları tüm adayların CV'lerini, teknik yetkinliklerini, sınav başarılarını ve vaka çözümlerindeki psikolojik tepkilerini karşılaştırır.</li>
+                <li><strong>Kazanan Aday (Winner):</strong> Sistem, pozisyona en uygun adayı gerekçeleriyle birlikte birinci seçer ve adayların puanlı sıralama listesini çıkarır.</li>
+            </ol>
+        </section>
+
+        <section id="methodology">
+            <h2>🎯 8. Yetkinlik Ölçüm Metodolojisi ve Görsel Raporlama</h2>
+            <p>SkillBridge AI platformu, hem işe alım hem de çalışan gelişim süreçleri için en gelişmiş İK ölçme ve değerlendirme standartlarını sunar.</p>
+
+            <h3>A. Dış Aday Yetkinlik/Beceri Ölçümü</h3>
+            <p>Şirketinize başvuran dış adayların, sektörel vaka analizleri ve simülasyonlar üzerinden yetkinliklerinin nesnel olarak ölçülmesini sağlar.</p>
+            <div class="img-container">
+                <img src="/media__1780782351578.png" alt="Dış Aday Değerlendirme Raporu">
+                <span class="img-caption">Şekil 1: Dış Aday Değerlendirme Raporu</span>
+            </div>
+
+            <h3>B. İç Aday, Çalışan Yetkinlik/ Beceri Ölçümü</h3>
+            <p>Mevcut çalışanlarınızın terfi, rotasyon ve kariyer yolu planlamalarında yetkinlik seviyelerinin izlenmesini sağlar.</p>
+            <div class="img-container">
+                <img src="/media__1780799356237.png" alt="İç Aday Gelişim Raporu">
+                <span class="img-caption">Şekil 2: İç Aday Gelişim Raporu</span>
+            </div>
+
+            <h3>C. İki & Daha Fazla Aday/CV Yetkinlik/Beceri Mukayese Ölçümü</h3>
+            <p>Adayların CV ve simülasyon başarı puanlarının yan yana getirilerek yapay zeka ile karşılaştırılması.</p>
+            <div class="img-container">
+                <img src="/media__1780889115184.png" alt="Aday Karşılaştırma Ekranı">
+                <span class="img-caption">Şekil 3: Aday Karşılaştırma Ekranı</span>
+            </div>
+
+            <h3>D. Vaka Analizi Sonucu Yetkinlik/Beceri Ölçümü</h3>
+            <p>Yapay zeka ajanlarının adayın karar verme ve problem çözme tarzını analiz ettiği bölümdür.</p>
+            <div class="img-container">
+                <img src="/media__1780800718923.png" alt="Vaka Analizi Sonuç Raporu">
+                <span class="img-caption">Şekil 4: Vaka Analizi Sonuç Raporu</span>
+            </div>
+
+            <h3>E. 40 Yetkinlik, Beş Seviye, Beş Davranış Sonuç Değerlendirme</h3>
+            <p>Platformdaki 4 ana kategoride (Bilişsel, Teknik, Temel, Yönetsel) yetkinliklerin, Seviye 1'den (Gelişmeli) Seviye 5'e (Örnek) kadar beş olgunluk düzeyinde değerlendirilmesi.</p>
+            <div class="img-container">
+                <img src="/media__1780889500071.png" alt="Yetkinlik Seviye Tanımları">
+                <span class="img-caption">Şekil 5: Yetkinlik Seviye Tanımları</span>
+            </div>
+
+            <h3>F. Radar Grafik İle Görsel Yetkinlik / Beceri "Hedef & Mevcut Durum" Analizi</h3>
+            <p>Adayın veya çalışanın mevcut yetkinlik düzeyinin, rol için hedeflenen baraj seviyesi (%60) ile radar grafiği üzerinde karşılaştırılması.</p>
+            <div class="img-container">
+                <img src="/media__1780889349938.png" alt="Radar Grafik Karşılaştırması">
+                <span class="img-caption">Şekil 6: Radar Grafik Karşılaştırması</span>
+            </div>
+        </section>
+
+        <div class="footer">
+            <p>&copy; 2026 SkillBridge AI Evaluation Platform. Tüm Hakları Saklıdır.</p>
+        </div>
+    </div>
+
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ 
+            startOnLoad: true,
+            theme: 'default',
+            themeVariables: {
+                primaryColor: '#e0f2fe',
+                primaryTextColor: '#0f172a',
+                lineColor: '#6366f1'
+            }
+        });
+    </script>
+</body>
+</html>

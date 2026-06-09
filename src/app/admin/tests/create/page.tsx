@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 
-export default function CreateTestPage() {
+function CreateTestPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const docId = searchParams.get('docId');
@@ -22,6 +22,19 @@ export default function CreateTestPage() {
   const [questionCount, setQuestionCount] = useState<number>(5);
   const [timeLimit, setTimeLimit] = useState<number>(15);
   const [competencies, setCompetencies] = useState<string[]>([]);
+  const [selectedTypes, setSelectedTypes] = useState<string[]>(['SIMULATION']);
+
+  const handleTypeToggle = (type: 'SIMULATION' | 'HR_DIRECT') => {
+    if (selectedTypes.includes(type)) {
+      if (selectedTypes.length > 1) {
+        setSelectedTypes(selectedTypes.filter(t => t !== type));
+      } else {
+        alert('En az bir sınav türü seçili olmalıdır.');
+      }
+    } else {
+      setSelectedTypes([...selectedTypes, type]);
+    }
+  };
   
   // Master Data Bank states
   const [dbIndustries, setDbIndustries] = useState<any[]>([]);
@@ -86,7 +99,7 @@ export default function CreateTestPage() {
   };
 
   // Pipeline Animation State
-  type PipelineState = 'IDLE' | 'AJAN_1' | 'AJAN_2' | 'AJAN_3' | 'TEST_READY';
+  type PipelineState = 'IDLE' | 'AJAN_1' | 'AJAN_2' | 'AJAN_3' | 'AJAN_16' | 'TEST_READY';
   const [pipelineState, setPipelineState] = useState<PipelineState>('IDLE');
 
   const handleGenerate = async () => {
@@ -96,14 +109,33 @@ export default function CreateTestPage() {
     }
 
     setIsGenerating(true);
-    setPipelineState('AJAN_1');
+    const hasSimulation = selectedTypes.includes('SIMULATION');
+    const hasHrDirect = selectedTypes.includes('HR_DIRECT');
+
+    if (hasSimulation) {
+      setPipelineState('AJAN_1');
+    } else if (hasHrDirect) {
+      setPipelineState('AJAN_16');
+    }
+    
     try {
-      // Fake delay for Ajan 1
-      await new Promise(r => setTimeout(r, 1500));
-      setPipelineState('AJAN_2');
-      // Fake delay for Ajan 2
-      await new Promise(r => setTimeout(r, 1500));
-      setPipelineState('AJAN_3');
+      if (hasSimulation) {
+        // Fake delay for Ajan 1
+        await new Promise(r => setTimeout(r, 1200));
+        setPipelineState('AJAN_2');
+        // Fake delay for Ajan 2
+        await new Promise(r => setTimeout(r, 1200));
+        setPipelineState('AJAN_3');
+        if (hasHrDirect) {
+          // Fake delay for Ajan 3 transition to Ajan 16
+          await new Promise(r => setTimeout(r, 1200));
+          setPipelineState('AJAN_16');
+          await new Promise(r => setTimeout(r, 1200));
+        }
+      } else if (hasHrDirect) {
+        // Fake delay for Ajan 16
+        await new Promise(r => setTimeout(r, 2000));
+      }
       
       // Start real request
       const res = await fetch('/api/tests/generate-simulation', {
@@ -118,7 +150,9 @@ export default function CreateTestPage() {
           competencies,
           difficulty,
           questionCount,
-          timeLimit
+          timeLimit,
+          testTypes: selectedTypes,
+          testType: selectedTypes[0] // fallback compatibility
         })
       });
 
@@ -192,6 +226,44 @@ export default function CreateTestPage() {
               <span className="w-8 h-8 rounded-lg bg-emerald-500 text-white flex items-center justify-center text-sm">⚙️</span>
               Kariyer ve Yetkinlik Odaklı Test Oluşturucu
             </h2>
+
+            {/* Sınav Yapılandırma Türü Seçimi */}
+            <div className="mb-8 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-5 rounded-2xl shadow-sm">
+              <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-3">Sınav Yapılandırma Türü</label>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div 
+                  onClick={() => handleTypeToggle('SIMULATION')}
+                  className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedTypes.includes('SIMULATION') ? 'bg-emerald-50/50 border-emerald-500 dark:bg-emerald-950/10 dark:border-emerald-500' : 'bg-slate-50/50 border-slate-200 hover:bg-slate-100/50 dark:bg-zinc-800/40 dark:border-zinc-800 dark:hover:bg-zinc-800/60'}`}
+                >
+                  <input 
+                    type="checkbox" 
+                    checked={selectedTypes.includes('SIMULATION')}
+                    readOnly
+                    className="mt-1 mr-3 text-emerald-600 focus:ring-emerald-500 h-4 w-4 shrink-0 rounded"
+                  />
+                  <div>
+                    <span className="block font-bold text-sm text-slate-900 dark:text-white">Senaryo Odaklı Simülasyon</span>
+                    <span className="block text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">Ajan 1, 2 ve 3 vasıtasıyla adaya özel bir iş senaryosu (case study) ve bu senaryoya bağlı kriz yönetim soruları üretir.</span>
+                  </div>
+                </div>
+
+                <div 
+                  onClick={() => handleTypeToggle('HR_DIRECT')}
+                  className={`flex items-start p-4 rounded-xl border-2 cursor-pointer transition-all ${selectedTypes.includes('HR_DIRECT') ? 'bg-purple-50/50 border-purple-500 dark:bg-purple-950/10 dark:border-purple-500' : 'bg-slate-50/50 border-slate-200 hover:bg-slate-100/50 dark:bg-zinc-800/40 dark:border-zinc-800 dark:hover:bg-zinc-800/60'}`}
+                >
+                  <input 
+                    type="checkbox" 
+                    checked={selectedTypes.includes('HR_DIRECT')}
+                    readOnly
+                    className="mt-1 mr-3 text-purple-600 focus:ring-purple-500 h-4 w-4 shrink-0 rounded"
+                  />
+                  <div>
+                    <span className="block font-bold text-sm text-slate-900 dark:text-white">Yetkinlik Odaklı Test (Ajan 16)</span>
+                    <span className="block text-xs text-slate-500 dark:text-zinc-400 mt-1 leading-relaxed">Uzun bir vaka senaryosu üretmeden, doğrudan seçtiğiniz yetkinlik matrisi tanımlarına dayalı mülakat soruları üretir.</span>
+                  </div>
+                </div>
+              </div>
+            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
               <div>
@@ -325,21 +397,66 @@ export default function CreateTestPage() {
             {/* Cascade Pipeline Animation */}
             {pipelineState !== 'IDLE' && (
               <div className="bg-white dark:bg-zinc-950 p-6 rounded-2xl border border-slate-200 dark:border-zinc-800 shadow-sm mb-6 animate-fade-in text-left">
-                <h2 className="text-xl font-semibold mb-6 text-purple-700 dark:text-purple-400">Cascade Pipeline: Grup 1 (Üreticiler)</h2>
+                <h2 className="text-xl font-semibold mb-6 text-purple-700 dark:text-purple-400">
+                  {selectedTypes.includes('SIMULATION') && selectedTypes.includes('HR_DIRECT')
+                    ? 'Cascade Pipeline: Hibrit Değerlendirme & Yetkinlik Modülü'
+                    : selectedTypes.includes('HR_DIRECT')
+                      ? 'Cascade Pipeline: Yetkinlik Değerlendirme Modülü'
+                      : 'Cascade Pipeline: Grup 1 (Üreticiler)'}
+                </h2>
                 <div className="space-y-4">
-                  {['AJAN_1', 'AJAN_2', 'AJAN_3'].map((state, idx) => {
-                    const isActive = pipelineState === state;
-                    const isPast = ['TEST_READY'].includes(pipelineState) || (state === 'AJAN_1' && pipelineState !== 'AJAN_1') || (state === 'AJAN_2' && pipelineState === 'AJAN_3');
-                    return (
-                      <div key={state} className={`flex items-center p-4 rounded-xl border transition-all duration-500 ${isActive ? 'bg-blue-50 border-blue-300 dark:bg-blue-900/20 dark:border-blue-700/50 scale-[1.02] shadow-md' : isPast ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700/50' : 'bg-slate-50 border-slate-200 dark:bg-zinc-900/50 dark:border-zinc-800 opacity-50'}`}>
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 font-bold ${isActive ? 'bg-blue-500 text-white animate-pulse' : isPast ? 'bg-emerald-500 text-white' : 'bg-slate-300 text-slate-500 dark:bg-zinc-700 dark:text-zinc-500'}`}>{idx + 1}</div>
-                        <div>
-                          <h3 className="font-bold text-slate-800 dark:text-zinc-200">Ajan {idx + 1} {['(Araştırmacı)', '(Yazar - Editör)', '(Soru Tasarımcısı)'][idx]}</h3>
-                          <p className={`text-sm ${isActive ? 'text-blue-600 dark:text-blue-400 font-medium' : isPast ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-zinc-500'}`}>{isActive ? 'Çalışıyor...' : isPast ? 'Tamamlandı.' : 'Bekliyor...'}</p>
+                  {(() => {
+                    const steps: { key: string; label: string; agentNum: string; descActive: string; descDone: string }[] = [];
+                    if (selectedTypes.includes('SIMULATION')) {
+                      steps.push(
+                        { key: 'AJAN_1', label: 'Ajan 1 (Araştırmacı)', agentNum: '1', descActive: 'Çalışıyor...', descDone: 'Tamamlandı.' },
+                        { key: 'AJAN_2', label: 'Ajan 2 (Yazar - Editör)', agentNum: '2', descActive: 'Çalışıyor...', descDone: 'Tamamlandı.' },
+                        { key: 'AJAN_3', label: 'Ajan 3 (Soru Tasarımcısı)', agentNum: '3', descActive: 'Çalışıyor...', descDone: 'Tamamlandı.' }
+                      );
+                    }
+                    if (selectedTypes.includes('HR_DIRECT')) {
+                      steps.push(
+                        { key: 'AJAN_16', label: 'Ajan 16 (Yetkinlik Soru Ajanı)', agentNum: '16', descActive: 'Çalışıyor: Matris verilerinden durum soruları üretiyor...', descDone: 'Tamamlandı.' }
+                      );
+                    }
+                    // Ajan 17 (Editör) artık soru üretiminde değil, aday testini teslim ettikten sonra yanıtların değerlendirilmesinde çalışıyor.
+
+                    return steps.map((step) => {
+                      const isActive = pipelineState === step.key;
+                      const order = steps.map(s => s.key);
+                      const currentIndex = order.indexOf(pipelineState);
+                      const stepIndex = order.indexOf(step.key);
+                      const isPast = pipelineState === 'TEST_READY' || (currentIndex > stepIndex && currentIndex !== -1);
+
+                      const borderClass = isActive
+                        ? 'bg-purple-50 border-purple-300 dark:bg-purple-900/20 dark:border-purple-700/50 scale-[1.02] shadow-md animate-pulse'
+                        : isPast
+                          ? 'bg-emerald-50 border-emerald-300 dark:bg-emerald-900/20 dark:border-emerald-700/50'
+                          : 'bg-slate-50 border-slate-200 dark:bg-zinc-900/50 dark:border-zinc-800 opacity-50';
+
+                      const iconBgClass = isActive
+                        ? 'bg-purple-500 text-white animate-pulse'
+                        : isPast
+                          ? 'bg-emerald-500 text-white'
+                          : 'bg-slate-300 text-slate-500 dark:bg-zinc-700 dark:text-zinc-500';
+
+                      const textClass = isActive
+                        ? 'text-purple-600 dark:text-purple-400 font-medium'
+                        : isPast
+                          ? 'text-emerald-600 dark:text-emerald-400'
+                          : 'text-slate-500 dark:text-zinc-500';
+
+                      return (
+                        <div key={step.key} className={`flex items-center p-4 rounded-xl border transition-all duration-500 ${borderClass}`}>
+                          <div className={`w-10 h-10 rounded-full flex items-center justify-center mr-4 font-bold ${iconBgClass}`}>{step.agentNum}</div>
+                          <div>
+                            <h3 className="font-bold text-slate-800 dark:text-zinc-200">{step.label}</h3>
+                            <p className={`text-sm ${textClass}`}>{isActive ? step.descActive : isPast ? step.descDone : 'Bekliyor...'}</p>
+                          </div>
                         </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    });
+                  })()}
                 </div>
               </div>
             )}
@@ -365,5 +482,17 @@ export default function CreateTestPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function CreateTestPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    }>
+      <CreateTestPageContent />
+    </Suspense>
   );
 }

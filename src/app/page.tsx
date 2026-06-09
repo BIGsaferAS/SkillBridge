@@ -28,7 +28,7 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero Section */}
-      <main className="pt-32 pb-16 sm:pt-40 sm:pb-24 lg:pb-32 overflow-hidden">
+      <main className="pt-[104px] pb-16 sm:pt-[104px] sm:pb-24 lg:pb-32 overflow-hidden">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
           {/* Decorative blobs */}
           <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full h-[500px] opacity-30 dark:opacity-10 pointer-events-none blur-3xl">
@@ -37,24 +37,32 @@ export default function LandingPage() {
           </div>
 
           <div className="text-center relative z-10 max-w-4xl mx-auto">
-            <div className="inline-flex items-center px-4 py-2 rounded-full bg-orange-50 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 font-bold text-sm mb-8 border border-orange-200 dark:border-orange-800/50 shadow-sm">
-              <span className="flex h-2 w-2 rounded-full bg-orange-500 mr-2 animate-pulse"></span>
-              Kritik Güncelleme: Otonom Yapay Zeka Aktif!
+            {/* Partnership Banner - Top Section */}
+            <div className="mb-10 flex flex-col items-center justify-center animate-fade-in">
+              <div className="max-w-lg w-full flex items-center justify-center">
+                <img 
+                  src="/partnership.png" 
+                  alt="Mendomi Akademi & BIGsafer İşbirliğiyle" 
+                  className="w-full max-w-lg h-auto object-contain drop-shadow-sm dark:bg-white/95 dark:p-6 dark:rounded-3xl"
+                />
+              </div>
             </div>
             
-            <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight mb-8 text-black dark:text-white">
-              Adayları <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">9 Farklı Yapay Zeka</span> İle Test Edin.
+            <h1 className="text-5xl sm:text-7xl font-extrabold tracking-tight mb-10 text-black dark:text-white">
+              Adayları <span className="text-transparent bg-clip-text bg-gradient-to-r from-emerald-600 to-emerald-400">9 Farklı Yapay Zeka Sayfası</span> İle Test Edin.
             </h1>
             
-            <p className="mt-4 text-xl sm:text-2xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto font-light leading-relaxed">
-              Özgeçmişleri okuyan, dinamik vaka senaryoları üreten ve mülakatı otonom olarak değerlendiren yapay zeka ajanlarıyla işe alım sürecinizi %80 hızlandırın.
-            </p>
-            
-            <div className="mt-10 flex justify-center gap-4 flex-col sm:flex-row">
+            <div className="mb-10 flex justify-center gap-4 flex-col sm:flex-row">
               <Link href="/login" className="px-8 py-4 bg-emerald-600 hover:bg-emerald-700 text-white rounded-full font-bold text-lg shadow-xl shadow-emerald-200 dark:shadow-emerald-900/20 transition-all transform hover:-translate-y-1 flex items-center justify-center gap-2">
-                İnsan Kaynakları Paneli 💼
+                GİRİŞ
               </Link>
             </div>
+
+            <p className="text-xl sm:text-2xl text-zinc-600 dark:text-zinc-400 max-w-3xl mx-auto font-light leading-relaxed">
+              Özgeçmişleri okuyan, dinamik vaka senaryoları üreten ve mülakatı otonom olarak değerlendiren yapay zeka sayfalarıyla işe alım sürecinizi %80 hızlandırın.
+            </p>
+
+
           </div>
         </div>
 

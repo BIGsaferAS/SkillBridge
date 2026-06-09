@@ -4,7 +4,6 @@ import { useState, useEffect, useRef } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminHeader from '@/components/AdminHeader';
 import TestShareButton from '@/components/TestShareButton';
 
 interface Message {
@@ -134,7 +133,6 @@ export default function QrAgentPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black">
-      <AdminHeader userName={(session?.user as any)?.name || 'Yönetici'} />
 
       <main className="max-w-7xl mx-auto p-6 mt-4 space-y-6">
         

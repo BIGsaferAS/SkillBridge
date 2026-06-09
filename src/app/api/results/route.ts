@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function POST(req: Request) {
   try {
@@ -44,7 +46,16 @@ export async function POST(req: Request) {
 
 export async function GET() {
   try {
+    const session = await getServerSession(authOptions);
+    if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'COMPANY_MANAGER' && (session.user as any).role !== 'SUPER_ADMIN')) {
+      return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
+    }
+
+    const role = (session.user as any).role;
+    const companyId = (session.user as any).companyId;
+
     const results = await prisma.testResult.findMany({
+      where: role === 'COMPANY_MANAGER' && companyId ? { user: { companyId } } : {},
       include: { user: true, jobPosting: true },
       orderBy: { createdAt: "desc" }
     });

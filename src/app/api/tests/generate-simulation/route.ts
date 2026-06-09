@@ -7,15 +7,18 @@ import { GoogleGenAI, Type } from '@google/genai';
 export async function POST(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'COMPANY_MANAGER')) {
+    if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'COMPANY_MANAGER' && (session.user as any).role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
 
-    const { documentId, sector, subject, department, roleName, competencies, difficulty, questionCount, timeLimit } = await req.json();
+    const { documentId, sector, subject, department, roleName, competencies, difficulty, questionCount, timeLimit, testType, testTypes } = await req.json();
     
     if (!sector || !department || !roleName || !competencies || competencies.length === 0) {
       return NextResponse.json({ error: 'Eksik parametreler' }, { status: 400 });
     }
+
+    // Support both testType (string) and testTypes (array) for backward compatibility
+    const selectedTypes: string[] = testTypes || (testType ? [testType] : ['SIMULATION']);
 
     const companyId = (session.user as any).companyId;
     let validCompanyId = null;
@@ -27,7 +30,6 @@ export async function POST(req: Request) {
     // Fetch Role Hierarchy
     const jobRoleObj = await prisma.jobRole.findUnique({ where: { name: roleName } });
     const isManagement = jobRoleObj?.hierarchy === 'MANAGEMENT';
-    const reportType = isManagement ? 'Stratejik Değerlendirme Raporu' : 'Teknik Yetkinlik Analizi';
 
     // Fetch Competency Rubrics
     const compObjects = await prisma.competency.findMany({
@@ -39,6 +41,9 @@ export async function POST(req: Request) {
     
     let aiScenario = "";
     let finalQuestions = [];
+
+    const hasSimulation = selectedTypes.includes('SIMULATION');
+    const hasHrDirect = selectedTypes.includes('HR_DIRECT');
 
     try {
       const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
@@ -52,28 +57,104 @@ export async function POST(req: Request) {
         }
       }
 
-      const promptStr = `
-        Sen uzman bir İK Değerlendirme Merkezi (Assessment Center) simülatörüsün.
-        Sektör: ${sector}
-        Departman: ${department}
-        Pozisyon: ${roleName}
-        Hiyerarşi: ${isManagement ? 'Yönetici' : 'Uzman'}
-        Konu: ${subject}
-        Zorluk: ${difficulty}
-        Soru Sayısı: ${count}
-        ${docContext}
-        Ölçülecek Yetkinlikler ve Hedef Kriterler:
-        ${competencies.map((c: string) => {
-          const det = compObjects.find((x: any) => x.name === c);
-          return `- ${c}: (Hedef Davranış: ${det?.levelE || 'Genel Başarı'})`;
-        }).join('\n')}
+      let promptStr = "";
 
-        Lütfen tamamen benzersiz, adaya özel, asla tekrar etmeyen gerçekçi bir vaka senaryosu (case study) üret. Senaryo pozisyonun zorluğuna ve sektör dinamiklerine uygun olmalı.
-        Ardından tam olarak ${count} adet ÇOKTAN SEÇMELİ soru üret. 
-        - Tüm seçtiğim yetkinlikleri kapsayacak şekilde soruları orantılı dağıt (Örn: 5 yetkinlik, 10 soru istendiyse her yetkinlik için ~2 soru).
-        - Tüm sorular KESİNLİKLE çoktan seçmeli (MULTIPLE_CHOICE) olmalıdır. Asla açık uçlu soru üretme.
-        - Çoktan seçmeli soruların 4 şıkkı (options) olmalıdır ve sadece biri (correctAnswer) hedef davranışa tam uygun doğru cevaptır. Diğerleri çeldiricidir.
+      if (hasSimulation && hasHrDirect) {
+        // Hybrid Mode: both selected
+        promptStr = `
+          Sen hem uzman bir İK Değerlendirme Merkezi (Assessment Center) simülatörüsün (Ajan 1, 2, 3) hem de kıdemli bir İK Yetkinlik Soru Ajanısın (Ajan 16).
+          Görevin, hem bir vaka senaryosuna (case study) bağlı simülasyon soruları hem de doğrudan yetkinlik matrisi tanımlarını baz alan davranışsal durum soruları içeren karma (hibrit) bir Değerlendirme Testi hazırlamaktır.
+          
+          Sektör: ${sector}
+          Departman: ${department}
+          Pozisyon: ${roleName}
+          Hiyerarşi: ${isManagement ? 'Yönetici' : 'Uzman'}
+          Konu: ${subject}
+          Zorluk: ${difficulty}
+          Soru Sayısı: ${count}
+          ${docContext}
+          
+          Seçilen Yetkinlikler ve Matris Davranışları:
+          ${competencies.map((c: string) => {
+            const det = compObjects.find((x: any) => x.name === c);
+            return `- ${c}:
+              * Seviye 1 (Gelişmeli): ${det?.levelA || 'Davranış çoğunlukla görülmez'}
+              * Seviye 3 (Beklenen): ${det?.levelC || 'Standart kurallara uyar'}
+              * Seviye 5 (Örnek): ${det?.levelE || 'İyi uygulamaları kuruma yayar'}`;
+          }).join('\n')}
+
+          Lütfen:
+          1. Adayı kriz anlarında test edecek gerçekçi bir vaka senaryosu (scenarioText) yaz.
+          2. Toplamda ${count} adet çoktan seçmeli (4 şıklı) soru üret.
+             - Soruların yarısı vaka senaryosuyla doğrudan ilişkili olmalıdır (senaryo/simülasyon soruları).
+             - Geri kalan sorular ise vaka senaryosundan bağımsız, doğrudan seçilen yetkinlik tanımlarına göre adayın davranışsal/durumsal tepkilerini mülakat mantığıyla ölçen İK durum soruları olmalıdır.
+          
+          ŞIK (SEÇENEK) ÜRETİMİNDE KESİNLİKLE UYULMASI GEREKEN GÜVENLİK KURALLARI:
+          1. Doğru seçeneğin metni (correctAnswer), "options" dizisi içinde her soruda farklı konumlara (farklı dizinlere/indekslere) yerleştirilmelidir. Örneğin ilk soruda 2. sırada, ikinci soruda 4. sırada, üçüncü soruda 1. sırada yer almalıdır. KESİNLİKLE tüm sorularda doğru cevabı dizinin ilk elemanı (A şıkkı) olarak yerleştirme!
+          2. A, B, C ve D şıklarındaki tüm seçenekler (options dizisindeki 4 metin) kelime sayısı, karakter uzunluğu ve detay derecesi olarak birbirine KESİNLİKLE çok yakın (neredeyse tamamen aynı uzunlukta) olmalıdır. Doğru seçenek diğerlerinden daha uzun, daha detaylı veya daha kısa/öz olmamalı, kendini uzunluğuyla belli etmemelidir.
         `;
+      } else if (hasHrDirect) {
+        // Only HR Direct questions (Ajan 16)
+        promptStr = `
+          Sen uzman bir İşe Alım Değerlendirme ve İK analistisin (Ajan 16 - İK Yetkinlik Soru Ajanı).
+          Görevin, adayın seçilen yetkinlik seviyelerini ve davranışlarını ölçmek üzere vaka hikayesi (case study) olmaksızın, doğrudan durum ve davranışsal İK soruları hazırlamaktır.
+          
+          Sektör: ${sector}
+          Departman: ${department}
+          Pozisyon: ${roleName}
+          Hiyerarşi: ${isManagement ? 'Yönetici' : 'Uzman'}
+          Konu: ${subject}
+          Zorluk: ${difficulty}
+          Soru Sayısı: ${count}
+          
+          Seçilen Yetkinlikler ve Matris Davranışları:
+          ${competencies.map((c: string) => {
+            const det = compObjects.find((x: any) => x.name === c);
+            return `- ${c}:
+              * Seviye 1 (Gelişmeli): ${det?.levelA || 'Davranış çoğunlukla görülmez'}
+              * Seviye 3 (Beklenen): ${det?.levelC || 'Standart kurallara uyar'}
+              * Seviye 5 (Örnek): ${det?.levelE || 'İyi uygulamaları kuruma yayar'}`;
+          }).join('\n')}
+
+          Lütfen tam olarak ${count} adet ÇOKTAN SEÇMELİ durum/davranış sorusu üret.
+          - Her soru, adayın iş hayatında karşılaşabileceği kısa bir İK durumunu (situation) ve bu durum karşısında sergileyeceği davranışı ölçmelidir.
+          - Soruların altında vaka hikayesi olmayacaktır. Her soru kendi içinde kısa bir senaryo/durum barındırmalıdır.
+          - Tüm seçtiğim yetkinlikleri dengeli şekilde kapsayacak şekilde soruları dağıt.
+          - Çoktan seçmeli soruların 4 şıkkı (options) olmalıdır ve sadece biri (correctAnswer) hedef davranışa tam uygun doğru cevaptır. Diğerleri çeldiricidir.
+          
+          ŞIK (SEÇENEK) ÜRETİMİNDE KESİNLİKLE UYULMASI GEREKEN GÜVENLİK KURALLARI:
+          1. Doğru seçeneğin metni (correctAnswer), "options" dizisi içinde her soruda farklı konumlara (farklı dizinlere/indekslere) yerleştirilmelidir. Örneğin ilk soruda 2. sırada, ikinci soruda 4. sırada, üçüncü soruda 1. sırada yer almalıdır. KESİNLİKLE tüm sorularda doğru cevabı dizinin ilk elemanı (A şıkkı) olarak yerleştirme!
+          2. A, B, C ve D şıklarındaki tüm seçenekler (options dizisindeki 4 metin) kelime sayısı, karakter uzunluğu ve detay derecesi olarak birbirine KESİNLİKLE çok yakın (neredeyse tamamen aynı uzunlukta) olmalıdır. Doğru seçenek diğerlerinden daha uzun, daha detaylı veya daha kısa/öz olmamalı, kendini uzunluğuyla belli etmemelidir.
+        `;
+      } else {
+        // Only Simulation questions (Ajan 1, 2, 3)
+        promptStr = `
+          Sen uzman bir İK Değerlendirme Merkezi (Assessment Center) simülatörüsün.
+          Sektör: ${sector}
+          Departman: ${department}
+          Pozisyon: ${roleName}
+          Hiyerarşi: ${isManagement ? 'Yönetici' : 'Uzman'}
+          Konu: ${subject}
+          Zorluk: ${difficulty}
+          Soru Sayısı: ${count}
+          ${docContext}
+          Ölçülecek Yetkinlikler ve Hedef Kriterler:
+          ${competencies.map((c: string) => {
+            const det = compObjects.find((x: any) => x.name === c);
+            return `- ${c}: (Hedef Davranış: ${det?.levelE || 'Genel Başarı'})`;
+          }).join('\n')}
+
+          Lütfen tamamen benzersiz, adaya özel, asla tekrar etmeyen gerçekçi bir vaka senaryosu (case study) üret. Senaryo pozisyonun zorluğuna ve sektör dinamiklerine uygun olmalı.
+          Ardından tam olarak ${count} adet ÇOKTAN SEÇMELİ soru üret. 
+          - Tüm seçtiğim yetkinlikleri kapsayacak şekilde soruları orantılı dağıt (Örn: 5 yetkinlik, 10 soru istendiyse her yetkinlik için ~2 soru).
+          - Tüm sorular KESİNLİKLE çoktan seçmeli (MULTIPLE_CHOICE) olmalıdır. Asla açık uçlu soru üretme.
+          - Çoktan seçmeli soruların 4 şıkkı (options) olmalıdır ve sadece biri (correctAnswer) hedef davranışa tam uygun doğru cevaptır. Diğerleri çeldiricidir.
+
+          ŞIK (SEÇENEK) ÜRETİMİNDE KESİNLİKLE UYULMASI GEREKEN GÜVENLİK KURALLARI:
+          1. Doğru seçeneğin metni (correctAnswer), "options" dizisi içinde her soruda farklı konumlara (farklı dizinlere/indekslere) yerleştirilmelidir. Örneğin ilk soruda 2. sırada, ikinci soruda 4. sırada, üçüncü soruda 1. sırada yer almalıdır. KESİNLİKLE tüm sorularda doğru cevabı dizinin ilk elemanı (A şıkkı) olarak yerleştirme!
+          2. A, B, C ve D şıklarındaki tüm seçenekler (options dizisindeki 4 metin) kelime sayısı, karakter uzunluğu ve detay derecesi olarak birbirine KESİNLİKLE çok yakın (neredeyse tamamen aynı uzunlukta) olmalıdır. Doğru seçenek diğerlerinden daha uzun, daha detaylı veya daha kısa/öz olmamalı, kendini uzunluğuyla belli etmemelidir.
+        `;
+      }
 
       const schema = {
         type: Type.OBJECT,
@@ -111,13 +192,13 @@ export async function POST(req: Request) {
       const responseText = response.text || '';
       const resultObj = JSON.parse(responseText);
       
-      aiScenario = resultObj.scenarioText;
+      aiScenario = resultObj.scenarioText || (hasHrDirect && !hasSimulation ? "Bu test, pozisyonun gerektirdiği kritik yetkinliklerin durum bazlı mülakat sorularıyla ölçülmesi amacıyla hazırlanmıştır. Aşağıdaki soruları dikkatlice yanıtlayınız." : "");
       finalQuestions = resultObj.questions.map((q: any) => ({
-        type: q.type,
+        type: q.type || 'MULTIPLE_CHOICE',
         competency: q.competency,
         text: q.text,
-        options: q.type === 'MULTIPLE_CHOICE' && q.options ? JSON.stringify(q.options) : null,
-        correctAnswer: q.type === 'MULTIPLE_CHOICE' ? q.correctAnswer : null,
+        options: q.options ? JSON.stringify(q.options) : null,
+        correctAnswer: q.correctAnswer,
         explanation: q.explanation
       }));
 
@@ -126,12 +207,23 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Yapay Zeka (Gemini) API hatası. Lütfen .env dosyanızdaki GEMINI_API_KEY ayarını kontrol edin. Detay: ' + aiError.message }, { status: 500 });
     }
 
+    const isBoth = hasSimulation && hasHrDirect;
+    const isHr = hasHrDirect && !hasSimulation;
+
     const test = await prisma.test.create({
       data: {
         companyId: validCompanyId,
         documentId: documentId || null,
-        title: `${roleName} - ${department} Kariyer Simülasyonu`,
-        description: `Bu simülasyon, seçtiğiniz yetkinlikleri ölçmek üzere Ajan 3 tarafından özel kurgulanmıştır.`,
+        title: isBoth 
+          ? `${roleName} - Hibrit Değerlendirme Simülasyonu`
+          : isHr 
+            ? `${roleName} - Yetkinlik Değerlendirme Testi` 
+            : `${roleName} - ${department} Kariyer Simülasyonu`,
+        description: isBoth
+          ? `Bu hibrit test, hem vaka senaryolu kriz sorularını hem de doğrudan yetkinlik matrisi davranış sorularını içerir.`
+          : isHr
+            ? `Bu test, ${roleName} rolü için seçtiğiniz yetkinlikleri ölçmek üzere Ajan 16 tarafından doğrudan hazırlanmıştır.`
+            : `Bu simülasyon, seçtiğiniz yetkinlikleri ölçmek üzere Ajan 3 tarafından özel kurgulanmıştır.`,
         sector,
         department,
         roleName,

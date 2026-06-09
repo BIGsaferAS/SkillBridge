@@ -139,7 +139,7 @@ ${difficultiesFaced}
           <div className="text-emerald-500 text-6xl mb-4 animate-bounce">🎉</div>
           <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">Bilgileriniz Başarıyla Gönderildi!</h1>
           <p className="text-slate-500 dark:text-zinc-400 mb-6">
-            Bilgileriniz veri havuzuna kaydedilmiştir. AI Karşılaştırma Ajanlarımız (10 Ajan) pozisyon veya terfi kriterlerine uyumunuzu analiz edecektir. Katılımınız için teşekkür ederiz.
+            Bilgileriniz veri havuzuna kaydedilmiştir. AI Karşılaştırma Sayfalarımız (10 Sayfa) pozisyon veya terfi kriterlerine uyumunuzu analiz edecektir. Katılımınız için teşekkür ederiz.
           </p>
           <div className="text-xs text-indigo-600 bg-indigo-50 dark:bg-indigo-900/30 px-3 py-2 rounded-md font-medium mb-6">
             Oturum: {candidate.session.title}
@@ -403,7 +403,7 @@ ${difficultiesFaced}
                 disabled={loading}
                 className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-400 text-white font-extrabold py-3.5 rounded-xl shadow-lg shadow-purple-500/25 hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer text-sm"
               >
-                {loading ? "Kaydediliyor..." : "Başvuruyu ve Bilgileri AI Ajanlarına Gönder 🚀"}
+                {loading ? "Kaydediliyor..." : "Başvuruyu ve Bilgileri AI Sayfalarına Gönder 🚀"}
               </button>
             </form>
           </div>

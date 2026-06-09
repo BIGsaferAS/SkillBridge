@@ -2,7 +2,6 @@ import { getServerSession } from "next-auth/next"
 import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { authOptions } from "@/app/api/auth/[...nextauth]/route"
-import AdminHeader from "@/components/AdminHeader"
 import Link from "next/link"
 
 const getScoreDetails = (score: number) => {
@@ -16,7 +15,7 @@ const getScoreDetails = (score: number) => {
 export default async function AdminDashboard() {
   const session = await getServerSession(authOptions);
   
-  if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "COMPANY_MANAGER")) {
+  if (!session || ((session.user as any).role !== "ADMIN" && (session.user as any).role !== "COMPANY_MANAGER" && (session.user as any).role !== "SUPER_ADMIN")) {
     redirect("/login");
   }
 
@@ -51,11 +50,6 @@ export default async function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black">
-      <AdminHeader 
-        userName={(session.user as any).name} 
-        companyName={company?.name || "Global"} 
-      />
-
       <main className="max-w-7xl mx-auto p-6 mt-4">
         
         {/* İstatistik Kartları */}
@@ -107,7 +101,7 @@ export default async function AdminDashboard() {
             <div className="bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
               <div className="p-6 border-b border-slate-200 dark:border-zinc-800 flex justify-between items-center">
                 <h2 className="text-lg font-bold text-slate-800 dark:text-zinc-200">En Son Tamamlanan Testler</h2>
-                <Link href="/define" className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Tümünü Gör & Analiz Et</Link>
+                <Link href="/admin/results" className="text-sm font-medium text-blue-600 dark:text-blue-400 hover:underline">Tümünü Gör</Link>
               </div>
               <div className="overflow-x-auto">
                 <table className="min-w-full divide-y divide-slate-200 dark:divide-zinc-800">

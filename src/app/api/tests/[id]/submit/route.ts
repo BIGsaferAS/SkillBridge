@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
+import { GoogleGenAI, Type } from '@google/genai';
 
 export async function POST(req: Request, context: any) {
   try {
@@ -53,8 +54,14 @@ export async function POST(req: Request, context: any) {
             data: {
               name: guestInfo.name,
               email: guestInfo.email,
-              role: "INDIVIDUAL"
+              role: "INDIVIDUAL",
+              companyId: guestInfo.companyId || null
             }
+          });
+        } else if (guestInfo.companyId && !user.companyId) {
+          user = await prisma.user.update({
+            where: { id: user.id },
+            data: { companyId: guestInfo.companyId }
           });
         }
         userId = user.id;
@@ -128,11 +135,90 @@ export async function POST(req: Request, context: any) {
       finalMatrix[comp] = Math.round((scores.earned / scores.total) * 100);
     }
 
-    // Generate AI Career Advice based on score
-    const aiCareerAdvice = `Sayın Aday, ${test.roleName} rolü için girdiğiniz simülasyonda özellikle Problem Çözme yetkinliğinde ortalama üstü bir başarı gösterdiniz. Ancak Kriz Yönetimi (açık uçlu senaryo) tarafında müşteri ilişkilerini daha stratejik yönetmeniz gerekiyor. İşe giriş adımınızda ilk 30 günde "Kriz İletişimi" eğitimlerine ağırlık vermeniz tavsiye edilir.`;
-
     const maxScore = test.questions.length * 10;
     const normalizedScore = Math.round((totalScore / maxScore) * 100);
+
+    let profileAnalysis = `Adayın ${test.roleName || test.title} testi sonucundaki profil analizi: Yetkinlik dağılımları incelendiğinde problem çözme ve analiz becerileri öne çıkmaktadır.`;
+    let benchmarking = `Aday, bu alanda sınava giren diğer kişilerin genel ortalamasına kıyasla %${normalizedScore} başarı skoru ile ortalamanın ${normalizedScore >= 75 ? 'üzerinde' : 'altında'} yer almaktadır.`;
+    let hireDecision = normalizedScore >= 75 ? 'HIRE (İşe Alım)' : 'NO HIRE (Geliştirilmeli)';
+    let careerAdvice = `Sayın Aday, ${test.roleName} rolü için girdiğiniz simülasyonda özellikle yetkinliklerinizi gösterdiniz. Zayıf alanlarınız için eğitim almanız önerilir.`;
+    let flawAnalysis = `Test içerisindeki yanlış yanıtlar incelendiğinde, adayın bazı yetkinlik alanlarında pratik tecrübe eksikliği yaşadığı gözlemlenmiştir.`;
+
+    try {
+      const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY || '' });
+
+      const evaluationPrompt = `
+        Sen; Seçme-Yerleştirme, Yetenek Yönetimi, Kurumsal Değerlendirme ve İK Analitiği alanında uzmanlaşmış, gelişmiş bir Yapay Zeka Değerlendirme Merkezisin (Assessment Center) ve Sayfa 17: Editör ve Kalite Denetleyicisisin (AJAN_17).
+
+        Görevin, adayın tamamladığı sınavın sonuçlarını ve yanıtlarını inceleyerek; "pozisyon ve yetkinlik.xlsx" dosyasındaki mimariye, 4 kategori x 10 yetkinlik yapısına ve Recep Yigit'in master prompt kurallarına uygun dinamik, özelleştirilmiş, şablon içermeyen bir değerlendirme raporu hazırlamaktır.
+
+        Sınav ve Aday Bilgileri:
+        - Pozisyon/Birim: ${test.roleName} / ${test.department}
+        - Sektör: ${test.sector}
+        - Seçilen Yetkinlikler: ${test.competencies}
+        - Genel Başarı Skoru: %${normalizedScore}
+        - Sınav Süresi: ${timeSpentSec} saniye
+        - Her Yetkinliğin Başarı Yüzdeleri (Radar Grafiği Veri Matrisi): ${JSON.stringify(finalMatrix)}
+        - Sorular ve Verilen Cevaplar:
+        ${test.questions.map((q, idx) => {
+          const ans = answers[q.id] || "";
+          const isQCorrect = ans === q.correctAnswer;
+          return `Soru ${idx + 1}: ${q.text}
+                  Ölçülen Yetkinlik: ${q.competency}
+                  Adayın Cevabı: ${ans}
+                  Doğru Cevap: ${q.correctAnswer}
+                  Durum: ${isQCorrect ? 'DOĞRU (10/10 Puan)' : 'YANLIŞ (0/10 Puan)'}`;
+        }).join('\n\n')}
+
+        Lütfen adayın gerçek performansına dayanan, statik kodlardan arındırılmış, dinamik bir değerlendirme raporu üret.
+        Rapor içeriği kesinlikle aşağıdaki alanları içeren geçerli bir JSON objesi olmalıdır:
+        1. profileAnalysis: Adayın genel ve yetkinlik bazlı başarı durumunu, güçlü yönlerini açıklayan detaylı profil analizi (en az 3 cümle).
+        2. benchmarking: Adayın performansını ideal profillerle karşılaştırıp benchmark yapan analiz (en az 2 cümle).
+        3. hireDecision: İşe alım/terfi kararı (Örn: "İŞE ALIM (HIRE)" veya "NO HIRE (Geliştirilmeli)" kararı ve nedeni).
+        4. careerAdvice: Adayın zayıf olduğu yetkinlikler için 30 günlük gelişim yol haritası ve eğitim önerileri (en az 4 cümle).
+        5. flawAnalysis: Test içerisindeki yanlış yanıtlarına dayanarak refleks zafiyetlerini belirleyen hata haritası analizi (en az 3 cümle).
+
+        JSON Format Şeması:
+        {
+          "profileAnalysis": "...",
+          "benchmarking": "...",
+          "hireDecision": "...",
+          "careerAdvice": "...",
+          "flawAnalysis": "..."
+        }
+      `;
+
+      const aiResponse = await ai.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: evaluationPrompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              profileAnalysis: { type: Type.STRING },
+              benchmarking: { type: Type.STRING },
+              hireDecision: { type: Type.STRING },
+              careerAdvice: { type: Type.STRING },
+              flawAnalysis: { type: Type.STRING }
+            },
+            required: ["profileAnalysis", "benchmarking", "hireDecision", "careerAdvice", "flawAnalysis"]
+          },
+          temperature: 0.7
+        }
+      });
+
+      const responseText = aiResponse.text || '';
+      const resultObj = JSON.parse(responseText);
+      if (resultObj.profileAnalysis) profileAnalysis = resultObj.profileAnalysis;
+      if (resultObj.benchmarking) benchmarking = resultObj.benchmarking;
+      if (resultObj.hireDecision) hireDecision = resultObj.hireDecision;
+      if (resultObj.careerAdvice) careerAdvice = resultObj.careerAdvice;
+      if (resultObj.flawAnalysis) flawAnalysis = resultObj.flawAnalysis;
+
+    } catch (aiError) {
+      console.error("Gemini AI evaluation error, falling back to static strings:", aiError);
+    }
 
     const attempt = await prisma.testAttempt.create({
       data: {
@@ -142,7 +228,7 @@ export async function POST(req: Request, context: any) {
         score: normalizedScore,
         timeSpentSec: timeSpentSec || 0,
         competencyMatrix: JSON.stringify(finalMatrix),
-        aiCareerAdvice,
+        aiCareerAdvice: careerAdvice,
         answers: {
           create: answerRecords
         }
@@ -158,11 +244,11 @@ export async function POST(req: Request, context: any) {
         roleName: test.roleName || test.title || 'Genel',
         score: normalizedScore,
         timeSpentSec: timeSpentSec || 0,
-        profileAnalysis: `Adayın ${test.roleName || test.title} testi sonucundaki profil analizi: Yetkinlik dağılımları incelendiğinde güçlü problem çözme ve analiz becerileri öne çıkmaktadır.`,
-        benchmarking: `Aday, bu alanda sınava giren diğer kişilerin genel ortalamasına kıyasla %${normalizedScore} başarı skoru ile ortalamanın ${normalizedScore >= 70 ? 'üzerinde' : 'altında'} yer almaktadır.`,
-        hireDecision: normalizedScore >= 70 ? 'HIRE (İşe Alım)' : 'NO HIRE (Geliştirilmeli)',
-        developmentAreas: aiCareerAdvice,
-        flawAnalysis: `Test içerisindeki yanlış yanıtlar incelendiğinde, adayın özellikle ${Object.keys(finalMatrix).find(k => finalMatrix[k] < 60) || 'Genel'} yetkinlik alanında bazı kavramsal hatalar yaptığı ve pratik tecrübe eksikliği yaşadığı gözlemlenmiştir.`
+        profileAnalysis,
+        benchmarking,
+        hireDecision,
+        developmentAreas: careerAdvice,
+        flawAnalysis
       }
     });
 

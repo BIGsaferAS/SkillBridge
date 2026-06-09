@@ -7,6 +7,7 @@ const inter = Inter({ subsets: ["latin"] });
 
 import { ThemeProvider } from "@/components/ThemeProvider"
 import BackButton from "@/components/BackButton"
+import RightClickHelp from "@/components/RightClickHelp"
 
 export const metadata: Metadata = {
   title: "SkillBridge - AI Değerlendirme",
@@ -25,6 +26,7 @@ export default function RootLayout({
           <Providers>
             {children}
             <BackButton />
+            <RightClickHelp />
           </Providers>
         </ThemeProvider>
       </body>

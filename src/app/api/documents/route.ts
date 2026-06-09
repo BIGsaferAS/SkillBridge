@@ -8,7 +8,7 @@ export const dynamic = 'force-dynamic';
 export async function GET(req: Request) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'COMPANY_MANAGER')) {
+    if (!session || ((session.user as any).role !== 'ADMIN' && (session.user as any).role !== 'COMPANY_MANAGER' && (session.user as any).role !== 'SUPER_ADMIN')) {
       return NextResponse.json({ error: 'Yetkisiz erişim' }, { status: 403 });
     }
 

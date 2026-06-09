@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import AdminHeader from '@/components/AdminHeader';
 
 const getScoreDetails = (score: number) => {
   if (score >= 80) return { label: 'İleri Seviye Yetkin', badgeClass: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-900/30' };
@@ -126,10 +125,6 @@ export default function AdminResultsPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-black">
-      <AdminHeader 
-        userName={(session?.user as any)?.name || 'Yönetici'} 
-      />
-
       <main className="max-w-7xl mx-auto p-6 mt-4 space-y-6">
         
         {/* Başlık ve Butonlar */}
@@ -142,8 +137,8 @@ export default function AdminResultsPage() {
             <Link href="/admin" className="px-4 py-2 bg-slate-800 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 shadow-sm transition-colors">
               Pano Anasayfası
             </Link>
-            <Link href="/define" className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg text-sm font-bold shadow-md hover:scale-105 transition-transform flex items-center gap-1">
-              💎 Define (Hazine) Analizi
+            <Link href="/ready-tests" className="px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-600 text-white rounded-lg text-sm font-bold shadow-md hover:scale-105 transition-transform flex items-center gap-1">
+              📋 Hazır Testler & Atama
             </Link>
           </div>
         </div>

@@ -1,9 +1,8 @@
 "use client";
 
 import { useSession } from "next-auth/react";
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
-import AdminHeader from "@/components/AdminHeader";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 
 const getScoreDetails = (score: number) => {
@@ -14,16 +13,20 @@ const getScoreDetails = (score: number) => {
   return { label: 'Yetkin Olmayan', badgeClass: 'bg-red-100 text-red-800 dark:bg-red-950 dark:text-red-400 border border-red-200 dark:border-red-900/30' };
 };
 
-export default function AdminComparisonDetailPage() {
+function AdminComparisonDetailPageContent() {
   const { data: session, status } = useSession();
   const params = useParams();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const autoRun = searchParams.get("run") === "true";
 
   const [compSession, setCompSession] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [runningPipeline, setRunningPipeline] = useState(false);
   const [pipelineStep, setPipelineStep] = useState(0);
   const [runLogs, setRunLogs] = useState<string[]>([]);
+  const [hasAutoRunTriggered, setHasAutoRunTriggered] = useState(false);
+  const [approving, setApproving] = useState(false);
   
   // Evaluation Result States
   const [evalResult, setEvalResult] = useState<any>(null);
@@ -34,25 +37,35 @@ export default function AdminComparisonDetailPage() {
   const [showGeneralQR, setShowGeneralQR] = useState(false);
 
   const pipelineAgentDetails = [
-    { name: "Ajan K1", role: "Gereksinim Çözümleyici", action: "İş tanımı/terfi kriterleri analiz edilip 5 temel yetkinlik metrik parametresi belirleniyor..." },
-    { name: "Ajan K2", role: "CV & Profil Yapılandırıcı", action: "Adayların gönderdiği CV ve iş bitirme dokümanları taranıp yapılandırılmış JSON verisine dönüştürülüyor..." },
-    { name: "Ajan K3", role: "Teknik Uyum Değerlendirici", action: "Adayların teknik yetkinlikleri, ilan gereksinimlerindeki araç ve diller ile eşleştiriliyor..." },
-    { name: "Ajan K4", role: "Tecrübe & Kıdem Analisti", action: "Adayların mesleki kıdemi ve geçmiş rollerde kalma süreleri inceleniyor..." },
-    { name: "Ajan K5", role: "İş Bitirme & Proje Skorer", action: "Adayların tamamladıkları projelerin kapsamı, karmaşıklığı ve etki metrikleri puanlanıyor..." },
-    { name: "Ajan K6", role: "Metot & Araç Analisti", action: "Adayların aşina olduğu metodolojiler (Agile, Scrum, DevOps, git) ve çalışma pratikleri denetleniyor..." },
-    { name: "Ajan K7", role: "Davranışsal Profiler", action: "Adayların kriz anı cevapları analiz edilerek sorun çözme ve iletişim üslupları profilleniyor..." },
-    { name: "Ajan K8", role: "Risk ve Tutarsızlık Dedektörü", action: "Profildeki boşluklar, çelişkili ifadeler veya abartılı iddialar taranıp risk faktörleri saptanıyor..." },
-    { name: "Ajan K9", role: "Puanlama & Karar Motoru", action: "Tüm ajanların bağımsız puanları ağırlıklandırılarak nihai uyumluluk skorları hesaplanıyor..." },
-    { name: "Ajan K10", role: "Şampiyon Belirleyici", action: "Adaylar yan yana kıyaslanıyor, liderlik tablosu oluşturuluyor ve şampiyon aday seçiliyor..." }
+    { name: "Sayfa K1", role: "Gereksinim Çözümleyici", action: "İş tanımı/terfi kriterleri analiz edilip 5 temel yetkinlik metrik parametresi belirleniyor..." },
+    { name: "Sayfa K2", role: "CV & Profil Yapılandırıcı", action: "Adayların gönderdiği CV ve iş bitirme dokümanları taranıp yapılandırılmış JSON verisine dönüştürülüyor..." },
+    { name: "Sayfa K3", role: "Teknik Uyum Değerlendirici", action: "Adayların teknik yetkinlikleri, ilan gereksinimlerindeki araç ve diller ile eşleştiriliyor..." },
+    { name: "Sayfa K4", role: "Tecrübe & Kıdem Analisti", action: "Adayların mesleki kıdemi ve geçmiş rollerde kalma süreleri inceleniyor..." },
+    { name: "Sayfa K5", role: "İş Bitirme & Proje Skorer", action: "Adayların tamamladıkları projelerin kapsamı, karmaşıklığı ve etki metrikleri puanlanıyor..." },
+    { name: "Sayfa K6", role: "Metot & Araç Analisti", action: "Adayların aşina olduğu metodolojiler (Agile, Scrum, DevOps, git) ve çalışma pratikleri denetleniyor..." },
+    { name: "Sayfa K7", role: "Davranışsal Profiler", action: "Adayların kriz anı cevapları analiz edilerek sorun çözme ve iletişim üslupları profilleniyor..." },
+    { name: "Sayfa K8", role: "Risk ve Tutarsızlık Dedektörü", action: "Profildeki boşluklar, çelişkili ifadeler veya abartılı iddialar taranıp risk faktörleri saptanıyor..." },
+    { name: "Sayfa K9", role: "Puanlama & Karar Motoru", action: "Tüm sayfaların bağımsız puanları ağırlıklandırılarak nihai uyumluluk skorları hesaplanıyor..." },
+    { name: "Sayfa K10", role: "Şampiyon Belirleyici", action: "Adaylar yan yana kıyaslanıyor, liderlik tablosu oluşturuluyor ve şampiyon aday seçiliyor..." }
   ];
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
     } else if (status === "authenticated" && params?.id) {
-      fetchSessionDetails();
+      fetchSessionDetails().then((sessionData) => {
+        if (autoRun && sessionData && !hasAutoRunTriggered) {
+          const hasSubmitted = sessionData.candidates.some(
+            (c: any) => c.status === "SUBMITTED" || c.status === "EVALUATED"
+          );
+          if (hasSubmitted && sessionData.status !== "COMPLETED") {
+            setHasAutoRunTriggered(true);
+            run10AgentPipeline();
+          }
+        }
+      });
     }
-  }, [status, session, params, router]);
+  }, [status, session, params, router, autoRun, hasAutoRunTriggered]);
 
   const fetchSessionDetails = async () => {
     setLoading(true);
@@ -93,13 +106,17 @@ export default function AdminComparisonDetailPage() {
           } catch (e) {
             console.error("Error formatting saved evaluations", e);
           }
+        } else {
+          setEvalResult(null);
         }
       }
+      return data.session;
     } catch (e) {
       console.error(e);
     } finally {
       setLoading(false);
     }
+    return null;
   };
 
   const handleCopyLink = (candId: string) => {
@@ -113,7 +130,7 @@ export default function AdminComparisonDetailPage() {
     setPipelineStep(0);
     setRunLogs([]);
 
-    // Ajanların çalışma simülasyonu loglarını göster
+    // Sayfaların çalışma simülasyonu loglarını göster
     for (let i = 0; i < pipelineAgentDetails.length; i++) {
       setPipelineStep(i);
       const agent = pipelineAgentDetails[i];
@@ -124,17 +141,17 @@ export default function AdminComparisonDetailPage() {
         `[${new Date().toLocaleTimeString()}] ⚙️ İşlem: ${agent.action}`
       ]);
       
-      // Her ajan için 1200ms bekle (Canlı akış hissi)
+      // Her sayfa için 1200ms bekle (Canlı akış hissi)
       await new Promise(resolve => setTimeout(resolve, 1200));
 
       setRunLogs(prev => [
         ...prev,
-        `[${new Date().toLocaleTimeString()}] ✔️ ${agent.name} analizini tamamladı ve sonuçları bir sonraki ajana aktardı.`,
+        `[${new Date().toLocaleTimeString()}] ✔️ ${agent.name} analizini tamamladı ve sonuçları bir sonraki sayfaya aktardı.`,
         `--------------------------------------------------`
       ]);
     }
 
-    setRunLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 🧠 Tüm ajan verileri toplandı, nihai karşılaştırma raporu oluşturuluyor...`]);
+    setRunLogs(prev => [...prev, `[${new Date().toLocaleTimeString()}] 🧠 Tüm sayfa verileri toplandı, nihai karşılaştırma raporu oluşturuluyor...`]);
 
     try {
       const res = await fetch(`/api/admin/comparison/${params.id}/run`, {
@@ -162,6 +179,71 @@ export default function AdminComparisonDetailPage() {
     }
   };
 
+  const handleApproveSession = async () => {
+    if (!compSession) return;
+    const isRecruit = compSession.type === "RECRUITMENT";
+    const confirmMsg = isRecruit 
+      ? "İşe alımı onaylamak istediğinize emin misiniz?" 
+      : "Terfiyi onaylamak istediğinize emin misiniz?";
+    if (!confirm(confirmMsg)) return;
+
+    setApproving(true);
+    try {
+      const res = await fetch(`/api/admin/comparison/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "APPROVED" })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.session) {
+          setCompSession(data.session);
+          alert(isRecruit ? "İşe alım başarıyla onaylandı!" : "Terfi başarıyla onaylandı!");
+        }
+      } else {
+        const err = await res.json();
+        alert("Onaylama işlemi başarısız oldu: " + err.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Bir hata oluştu.");
+    } finally {
+      setApproving(false);
+    }
+  };
+
+  const handleCancelSession = async () => {
+    if (!compSession) return;
+    if (!confirm("Yapılan analizi iptal etmek ve başa dönmek istediğinize emin misiniz? Tüm puanlar ve raporlar sıfırlanacaktır.")) return;
+
+    setApproving(true);
+    try {
+      const res = await fetch(`/api/admin/comparison/${params.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: "ACTIVE" })
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        if (data.session) {
+          setCompSession(data.session);
+          setEvalResult(null);
+          alert("Analiz sonuçları başarıyla sıfırlandı!");
+        }
+      } else {
+        const err = await res.json();
+        alert("İşlem başarısız oldu: " + err.error);
+      }
+    } catch (e) {
+      console.error(e);
+      alert("Bir hata oluştu.");
+    } finally {
+      setApproving(false);
+    }
+  };
+
   if (loading && !compSession) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950">
@@ -183,11 +265,6 @@ export default function AdminComparisonDetailPage() {
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-800 dark:text-zinc-100 pb-12">
-      <AdminHeader 
-        userName={(session?.user as any)?.name || "Yönetici"} 
-        companyName="Global" 
-      />
-
       <main className="max-w-7xl mx-auto p-4 md:p-6 mt-4">
         {/* Navigation Breadcrumb */}
         <div className="mb-6">
@@ -206,17 +283,50 @@ export default function AdminComparisonDetailPage() {
             <p className="text-sm text-slate-500 mt-1">Oturum ID: {compSession.id}</p>
           </div>
 
-          <div className="flex gap-3">
+          <div className="flex flex-wrap gap-3 items-center">
+            {evalResult && (
+              compSession.status === "APPROVED" ? (
+                <div className="flex gap-2 items-center">
+                  <div className="bg-emerald-500/10 text-emerald-500 dark:bg-emerald-500/20 dark:text-emerald-400 border border-emerald-500/30 font-extrabold text-sm px-6 py-3 rounded-xl flex items-center gap-2">
+                    ✓ {isRecruitment ? "İşe Alım Onaylandı" : "Terfi Onaylandı"}
+                  </div>
+                  <button
+                    onClick={handleCancelSession}
+                    disabled={approving || runningPipeline}
+                    className="bg-red-500/10 hover:bg-red-500/20 text-red-600 dark:text-red-405 border border-red-500/20 hover:scale-105 active:scale-95 transition-all font-extrabold text-sm px-4 py-3 rounded-xl flex items-center gap-2 cursor-pointer"
+                  >
+                    Vazgeç
+                  </button>
+                </div>
+              ) : (
+                <div className="flex gap-2 items-center animate-fade-in">
+                  <button
+                    onClick={handleApproveSession}
+                    disabled={approving || runningPipeline}
+                    className="bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-800/50 text-white shadow-lg shadow-emerald-500/20 hover:scale-105 active:scale-95 transition-all font-extrabold text-sm px-6 py-3 rounded-xl flex items-center gap-2 cursor-pointer"
+                  >
+                    ✓ {approving ? "Onaylanıyor..." : "Onayla"}
+                  </button>
+                  <button
+                    onClick={handleCancelSession}
+                    disabled={approving || runningPipeline}
+                    className="bg-slate-200 hover:bg-slate-300 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 hover:scale-105 active:scale-95 transition-all font-extrabold text-sm px-4 py-3 rounded-xl flex items-center gap-2 cursor-pointer"
+                  >
+                    Vazgeç
+                  </button>
+                </div>
+              )
+            )}
             <button
               onClick={run10AgentPipeline}
-              disabled={!canRun || runningPipeline}
+              disabled={!canRun || runningPipeline || compSession.status === "APPROVED"}
               className={`font-extrabold text-sm px-6 py-3 rounded-xl shadow-lg transition-all flex items-center gap-2 cursor-pointer ${
-                canRun 
+                (canRun && compSession.status !== "APPROVED")
                   ? 'bg-purple-600 hover:bg-purple-700 text-white shadow-purple-500/20 hover:scale-105 active:scale-95' 
                   : 'bg-slate-200 text-slate-400 dark:bg-zinc-800 dark:text-zinc-600 cursor-not-allowed'
               }`}
             >
-              🚀 {runningPipeline ? "Ajanlar Çalışıyor..." : "10 Ajanı Başlat ve Kıyasla"}
+              🚀 {runningPipeline ? "Sayfalar Çalışıyor..." : "10 Sayfayı Başlat ve Kıyasla"}
             </button>
           </div>
         </div>
@@ -299,7 +409,7 @@ export default function AdminComparisonDetailPage() {
                   <div className="w-3 h-3 rounded-full bg-red-500"></div>
                   <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
                   <div className="w-3 h-3 rounded-full bg-green-500"></div>
-                  <span className="text-zinc-400 text-xs ml-3 font-semibold">10-Agent Autonomous Pipeline Execution Terminal</span>
+                  <span className="text-zinc-400 text-xs ml-3 font-semibold">10 Sayfalı Otonom İşlem Terminali</span>
                 </div>
 
                 {/* Pipeline visual steps */}
@@ -687,5 +797,17 @@ export default function AdminComparisonDetailPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminComparisonDetailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600"></div>
+      </div>
+    }>
+      <AdminComparisonDetailPageContent />
+    </Suspense>
   );
 }

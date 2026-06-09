@@ -490,8 +490,19 @@ export default function DataBankPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-1">Şirket ID (Opsiyonel)</label>
-                  <input type="text" value={userFormData.companyId} onChange={e => setUserFormData({...userFormData, companyId: e.target.value})} className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none" placeholder="Şirket ataması için id girin" />
+                  <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-1">Şirket (Opsiyonel)</label>
+                  <select 
+                    value={userFormData.companyId} 
+                    onChange={e => setUserFormData({...userFormData, companyId: e.target.value})} 
+                    className="w-full px-3 py-2 border rounded-lg dark:bg-zinc-800 dark:border-zinc-700 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none"
+                  >
+                    <option value="">Şirket Yok / Bireysel Aday</option>
+                    {data.companies?.map((company: any) => (
+                      <option key={company.id} value={company.id}>
+                        {company.name}
+                      </option>
+                    ))}
+                  </select>
                 </div>
                 <div>
                   <label className="block text-sm font-bold text-slate-700 dark:text-zinc-300 mb-1">Şifre {editingUserId && '(Değiştirmeyecekseniz boş bırakın)'}</label>

@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
 
-export default function SolveTestPage({ params }: any) {
+function SolveTestContent({ params }: any) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session, status: sessionStatus } = useSession();
@@ -16,6 +16,8 @@ export default function SolveTestPage({ params }: any) {
   const [guestName, setGuestName] = useState("");
   const [guestEmail, setGuestEmail] = useState("");
   const [guestConfirmed, setGuestConfirmed] = useState(false);
+  const [verificationError, setVerificationError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
   
   // Test State
   const [answers, setAnswers] = useState<Record<string, string>>({});
@@ -31,6 +33,41 @@ export default function SolveTestPage({ params }: any) {
       setGuestConfirmed(true);
     }
   }, [searchParams]);
+
+  const handleGuestSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const companyId = searchParams.get("company") || test?.companyId;
+    
+    if (companyId) {
+      if (!guestName.trim()) return;
+      setVerificationError("");
+      setIsVerifying(true);
+      try {
+        const res = await fetch('/api/companies/verify-user', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ companyId, name: guestName })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setGuestName(data.user.name);
+          setGuestEmail(data.user.email);
+          setGuestConfirmed(true);
+        } else {
+          const data = await res.json();
+          setVerificationError(data.error || 'İsim şirket listesinde bulunamadı.');
+        }
+      } catch (err) {
+        setVerificationError('Doğrulama servisine bağlanılamadı.');
+      } finally {
+        setIsVerifying(false);
+      }
+    } else {
+      if (guestName.trim() && guestEmail.trim()) {
+        setGuestConfirmed(true);
+      }
+    }
+  };
 
   useEffect(() => {
     const fetchTest = async () => {
@@ -93,7 +130,11 @@ export default function SolveTestPage({ params }: any) {
         body: JSON.stringify({ 
           answers,
           timeSpentSec: (test.timeLimitSec || 900) - timeLeft,
-          guestInfo: sessionStatus === "unauthenticated" ? { name: guestName, email: guestEmail } : undefined
+          guestInfo: sessionStatus === "unauthenticated" ? { 
+            name: guestName, 
+            email: guestEmail, 
+            companyId: searchParams.get("company") || test?.companyId || undefined 
+          } : undefined
         })
       });
 
@@ -128,21 +169,27 @@ export default function SolveTestPage({ params }: any) {
   const progressPercent = totalCount === 0 ? 0 : Math.round((answeredCount / totalCount) * 100);
 
   if (sessionStatus === "unauthenticated" && !guestConfirmed) {
+    const companyId = searchParams.get("company") || test?.companyId;
+    const isCompanyFlow = !!companyId;
+    
     return (
       <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 shadow-xl max-w-md w-full">
+        <div className="bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-3xl p-6 md:p-8 shadow-xl max-w-md w-full animate-scale-up">
           <div className="w-12 h-12 bg-purple-100 dark:bg-purple-950/40 text-purple-600 dark:text-purple-400 rounded-2xl flex items-center justify-center font-bold text-xl mb-4 shadow-sm">
-            T
+            {isCompanyFlow ? "🏢" : "T"}
           </div>
           
           <h1 className="text-xl font-extrabold text-slate-900 dark:text-white mb-2">
-            {test.title}
+            {isCompanyFlow ? "Şirket Yetkili Test Girişi" : test.title}
           </h1>
           <p className="text-xs text-slate-500 dark:text-zinc-400 mb-6 leading-relaxed">
-            Bu sınava dış katılım veya QR kod taratarak erişmektesiniz. Testi çözmeye başlamadan önce lütfen ad soyad ve e-posta adresinizi girin.
+            {isCompanyFlow 
+              ? "Bu teste şirket yetkilendirmesiyle katılım sağlamaktasınız. Devam etmek için lütfen şirket listesindeki adınızı ve soyadınızı giriniz."
+              : "Bu sınava dış katılım veya QR kod taratarak erişmektesiniz. Testi çözmeye başlamadan önce lütfen ad soyad ve e-posta adresinizi girin."
+            }
           </p>
 
-          <form onSubmit={(e) => { e.preventDefault(); if(guestName.trim() && guestEmail.trim()) setGuestConfirmed(true); }} className="space-y-4">
+          <form onSubmit={handleGuestSubmit} className="space-y-4">
             <div>
               <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">Ad Soyad</label>
               <input
@@ -155,23 +202,37 @@ export default function SolveTestPage({ params }: any) {
               />
             </div>
 
-            <div>
-              <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">E-Posta Adresi</label>
-              <input
-                required
-                type="email"
-                value={guestEmail}
-                onChange={(e) => setGuestEmail(e.target.value)}
-                placeholder="Örn: mehmet@mail.com"
-                className="w-full border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-zinc-950 focus:ring-2 focus:ring-purple-500 outline-none text-xs text-slate-900 dark:text-white"
-              />
-            </div>
+            {!isCompanyFlow && (
+              <div>
+                <label className="block text-[10px] font-bold text-slate-500 uppercase mb-1">E-Posta Adresi</label>
+                <input
+                  required
+                  type="email"
+                  value={guestEmail}
+                  onChange={(e) => setGuestEmail(e.target.value)}
+                  placeholder="Örn: mehmet@mail.com"
+                  className="w-full border border-slate-200 dark:border-zinc-800 rounded-xl px-4 py-2.5 bg-slate-50 dark:bg-zinc-950 focus:ring-2 focus:ring-purple-500 outline-none text-xs text-slate-900 dark:text-white"
+                />
+              </div>
+            )}
+
+            {verificationError && (
+              <div className="p-3 bg-red-50 dark:bg-red-950/20 text-red-600 dark:text-red-400 rounded-xl text-xs font-semibold border border-red-100 dark:border-red-900/30">
+                ⚠️ {verificationError}
+              </div>
+            )}
 
             <button
               type="submit"
-              className="w-full bg-purple-600 hover:bg-purple-700 text-white font-extrabold py-3 rounded-xl shadow-lg shadow-purple-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all text-xs cursor-pointer mt-2"
+              disabled={isVerifying}
+              className="w-full bg-purple-600 hover:bg-purple-700 disabled:bg-slate-400 text-white font-extrabold py-3 rounded-xl shadow-lg shadow-purple-500/20 hover:scale-[1.01] active:scale-[0.99] transition-all text-xs cursor-pointer mt-2"
             >
-              Simülasyon Testine Başla 🚀
+              {isVerifying ? (
+                <span className="flex items-center justify-center gap-2">
+                  <svg className="animate-spin h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg>
+                  Doğrulanıyor...
+                </span>
+              ) : "Simülasyon Testine Başla 🚀"}
             </button>
           </form>
         </div>
@@ -382,5 +443,13 @@ export default function SolveTestPage({ params }: any) {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function SolveTestPage({ params }: any) {
+  return (
+    <Suspense fallback={<div className="p-10 text-center text-slate-500">Yükleniyor...</div>}>
+      <SolveTestContent params={params} />
+    </Suspense>
   );
 }
