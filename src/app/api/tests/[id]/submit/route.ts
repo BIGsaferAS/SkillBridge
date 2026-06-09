@@ -140,7 +140,7 @@ export async function POST(req: Request, context: any) {
 
     let profileAnalysis = `Adayın ${test.roleName || test.title} testi sonucundaki profil analizi: Yetkinlik dağılımları incelendiğinde problem çözme ve analiz becerileri öne çıkmaktadır.`;
     let benchmarking = `Aday, bu alanda sınava giren diğer kişilerin genel ortalamasına kıyasla %${normalizedScore} başarı skoru ile ortalamanın ${normalizedScore >= 75 ? 'üzerinde' : 'altında'} yer almaktadır.`;
-    let hireDecision = normalizedScore >= 75 ? 'HIRE (İşe Alım)' : 'NO HIRE (Geliştirilmeli)';
+    let hireDecision = normalizedScore >= 75 ? 'HIRE (İşe Alım)' : 'Geliştirilmeli (Uygun Değil)';
     let careerAdvice = `Sayın Aday, ${test.roleName} rolü için girdiğiniz simülasyonda özellikle yetkinliklerinizi gösterdiniz. Zayıf alanlarınız için eğitim almanız önerilir.`;
     let flawAnalysis = `Test içerisindeki yanlış yanıtlar incelendiğinde, adayın bazı yetkinlik alanlarında pratik tecrübe eksikliği yaşadığı gözlemlenmiştir.`;
 
@@ -174,7 +174,7 @@ export async function POST(req: Request, context: any) {
         Rapor içeriği kesinlikle aşağıdaki alanları içeren geçerli bir JSON objesi olmalıdır:
         1. profileAnalysis: Adayın genel ve yetkinlik bazlı başarı durumunu, güçlü yönlerini açıklayan detaylı profil analizi (en az 3 cümle).
         2. benchmarking: Adayın performansını ideal profillerle karşılaştırıp benchmark yapan analiz (en az 2 cümle).
-        3. hireDecision: İşe alım/terfi kararı (Örn: "İŞE ALIM (HIRE)" veya "NO HIRE (Geliştirilmeli)" kararı ve nedeni).
+        3. hireDecision: İşe alım/terfi kararı (Örn: "İŞE ALIM (HIRE)" veya "Geliştirilmeli (Uygun Değil)" kararı ve nedeni).
         4. careerAdvice: Adayın zayıf olduğu yetkinlikler için 30 günlük gelişim yol haritası ve eğitim önerileri (en az 4 cümle).
         5. flawAnalysis: Test içerisindeki yanlış yanıtlarına dayanarak refleks zafiyetlerini belirleyen hata haritası analizi (en az 3 cümle).
 

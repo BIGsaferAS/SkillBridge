@@ -398,7 +398,7 @@ function TestResultContent() {
                     </h3>
                     <div className="flex items-center gap-4">
                       <span className={`px-4 py-1.5 rounded-xl text-xs font-black uppercase tracking-wider ${
-                        (attempt.hireDecision || "").toUpperCase().includes("NO HIRE") || (attempt.hireDecision || "").toUpperCase().includes("GELİŞTİRİLMELİ") || (attempt.hireDecision || "").toUpperCase().includes("RED")
+                        (attempt.hireDecision || "").toUpperCase().includes("GELİŞTİRİLMELİ") || (attempt.hireDecision || "").toUpperCase().includes("RED") || (attempt.hireDecision || "").toUpperCase().includes("UYGUN DEĞİL")
                           ? "bg-rose-100 text-rose-700 dark:bg-rose-950/30 dark:text-rose-400"
                           : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
                       }`}>

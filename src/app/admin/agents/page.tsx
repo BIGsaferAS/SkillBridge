@@ -104,7 +104,7 @@ export default function AgentTaskDashboard() {
       name: 'Sayfa 9: Mentor (Decision Maker)',
       role: 'Nihai Karar Verici & Mentor',
       taskDescription: 'Diğer tüm sayfaların (Sayfa 4-8) ürettiği raporları birleştirerek nihai kararı üretir ve adayın zayıf olduğu alanlar için gelişim tavsiyeleri yazar.',
-      fulfilledWork: 'HIRE / NO HIRE kararını, yetkinlik gelişim haritasını ve 30 günlük çalışma önerilerini tamamlar.',
+       fulfilledWork: 'İşe Alım / Geliştirilmeli kararını, yetkinlik gelişim haritasını ve 30 günlük çalışma önerilerini tamamlar.',
       status: 'ONLINE'
     },
     {

@@ -83,7 +83,13 @@ export default function AdminResultsPage() {
     }
 
     if (selectedDecision !== 'ALL') {
-      temp = temp.filter(r => r.hireDecision === selectedDecision);
+      if (selectedDecision === 'HIRE') {
+        temp = temp.filter(r => !r.hireDecision.toUpperCase().includes('GELİŞTİRİLMELİ') && !r.hireDecision.toUpperCase().includes('RED') && !r.hireDecision.toUpperCase().includes('PENDING') && !r.hireDecision.toUpperCase().includes('UYGUN DEĞİL'));
+      } else if (selectedDecision === 'GELİŞTİRİLMELİ') {
+        temp = temp.filter(r => r.hireDecision.toUpperCase().includes('GELİŞTİRİLMELİ') || r.hireDecision.toUpperCase().includes('RED') || r.hireDecision.toUpperCase().includes('UYGUN DEĞİL'));
+      } else if (selectedDecision === 'PENDING') {
+        temp = temp.filter(r => r.hireDecision.toUpperCase().includes('PENDING'));
+      }
     }
 
     setFilteredResults(temp);
@@ -117,7 +123,7 @@ export default function AdminResultsPage() {
     ? Math.round(results.reduce((acc, curr) => acc + curr.score, 0) / totalSolved) 
     : 0;
   const highPerformers = results.filter(r => r.score >= 80).length;
-  const hiredCount = results.filter(r => !r.hireDecision.includes('NO') && !r.hireDecision.includes('RED') && !r.hireDecision.includes('PENDING')).length;
+  const hiredCount = results.filter(r => !r.hireDecision.toUpperCase().includes('GELİŞTİRİLMELİ') && !r.hireDecision.toUpperCase().includes('RED') && !r.hireDecision.toUpperCase().includes('PENDING') && !r.hireDecision.toUpperCase().includes('UYGUN DEĞİL')).length;
 
   if (status === 'loading' || isLoading) {
     return <div className="p-10 text-center text-slate-500">Yükleniyor...</div>;
@@ -210,7 +216,7 @@ export default function AdminResultsPage() {
             >
               <option value="ALL">Tümü</option>
               <option value="HIRE">HIRE (İşe Alım)</option>
-              <option value="NO HIRE">NO HIRE (Uygun Değil)</option>
+              <option value="GELİŞTİRİLMELİ">Geliştirilmeli (Uygun Değil)</option>
               <option value="PENDING">PENDING (Beklemede)</option>
             </select>
           </div>
@@ -232,7 +238,7 @@ export default function AdminResultsPage() {
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-zinc-800">
                 {filteredResults.map(r => {
-                  const isHire = !r.hireDecision.includes('NO') && !r.hireDecision.includes('RED') && !r.hireDecision.includes('PENDING');
+                  const isHire = !r.hireDecision.toUpperCase().includes('GELİŞTİRİLMELİ') && !r.hireDecision.toUpperCase().includes('RED') && !r.hireDecision.toUpperCase().includes('PENDING') && !r.hireDecision.toUpperCase().includes('UYGUN DEĞİL');
                   const isPending = r.hireDecision.includes('PENDING');
                   
                   return (

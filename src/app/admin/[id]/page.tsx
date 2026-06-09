@@ -146,7 +146,7 @@ export default function CandidateDetail() {
     return { level: "Seviye 1 (Gelişmeli)", text: meta.levelA || meta.description };
   };
 
-  const isHire = !result.hireDecision.includes('NO') && !result.hireDecision.includes('RED')
+  const isHire = !result.hireDecision.toUpperCase().includes('GELİŞTİRİLMELİ') && !result.hireDecision.toUpperCase().includes('RED') && !result.hireDecision.toUpperCase().includes('UYGUN DEĞİL')
 
   return (
     <div className="min-h-screen bg-slate-50 pb-20 dark:bg-zinc-950 dark:text-white">

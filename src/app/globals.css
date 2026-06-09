@@ -15,4 +15,11 @@
 body {
   background: var(--background);
   color: var(--foreground);
+  overflow-x: hidden;
+}
+
+/* Ensure long text wraps and does not overflow page boundaries */
+h1, h2, h3, h4, h5, h6, p, span, a, div, td, th, li {
+  overflow-wrap: break-word;
+  word-wrap: break-word;
 }
